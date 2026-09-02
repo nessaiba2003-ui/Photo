@@ -1,0 +1,24 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/lenscraft}
+    username: ${DATABASE_USERNAME:lenscraft}
+    password: ${DATABASE_PASSWORD:lenscraft}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 200MB
+
+app:
+  jwt-secret: ${JWT_SECRET:change-this-development-secret-change-this}
+  jwt-expiration-hours: ${JWT_EXPIRATION_HOURS:12}
+  cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}

@@ -13,7 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 public class DataSeeder {
   @Bean
-  CommandLineRunner seed(AdminUserRepository admins, PhotographyServiceRepository services, PortfolioProjectRepository projects, TestimonialRepository testimonials, PasswordEncoder encoder, @Value("${ADMIN_EMAIL:admin@lenscraft.local}") String email, @Value("${ADMIN_PASSWORD:ChangeMe123!}") String password) {
+  CommandLineRunner seed(AdminUserRepository admins, PhotographyServiceRepository services, PortfolioProjectRepository projects, TestimonialRepository testimonials, PasswordEncoder encoder, @Value("${ADMIN_EMAIL:admin@orionpolaris.local}") String email, @Value("${ADMIN_PASSWORD:ChangeMe123!}") String password) {
     return args -> {
       if (admins.count() == 0) {
         AdminUser admin = new AdminUser();
@@ -69,7 +69,7 @@ public class DataSeeder {
     p.setDescription(description);
     p.setCategory(category);
     p.setFeatured(featured);
-    p.setLocation("Casablanca");
+    p.setLocation("Rabat");
     p.setProjectDate(LocalDate.now().minusMonths(2));
     p.setCoverImageUrl(image);
     return p;

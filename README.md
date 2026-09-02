@@ -1,4 +1,4 @@
-# LensCraft Studio
+# LUMEN ASTRA
 
 Premium full-stack booking, portfolio, pricing, and admin platform for a photographer, videographer, and video editor.
 
@@ -62,7 +62,7 @@ The Spring Boot backend and PostgreSQL database should be deployed separately on
 
 Seeded from environment variables:
 
-- Email: `admin@lenscraft.local`
+- Email: `admin@orionpolaris.local`
 - Password: `ChangeMe123!`
 
 Change these before deploying.

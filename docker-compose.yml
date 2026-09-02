@@ -22,7 +22,7 @@ services:
       DATABASE_USERNAME: lenscraft
       DATABASE_PASSWORD: lenscraft
       JWT_SECRET: change-this-development-secret-change-this
-      ADMIN_EMAIL: admin@lenscraft.local
+      ADMIN_EMAIL: admin@orionpolaris.local
       ADMIN_PASSWORD: ChangeMe123!
       CORS_ORIGINS: http://localhost:5173,http://localhost:8081
     ports:

@@ -22,9 +22,9 @@ public class PublicController {
   @GetMapping("/site")
   Map<String, Object> site() {
     return Map.of(
-        "brand", "LensCraft Studio",
-        "role", "Photographer • Videographer • Video Editor",
-        "tagline", "Cinematic stories for weddings, brands, artists, and unforgettable nights.",
+        "brand", "LUMEN ASTRA",
+        "role", "Photographer - Videographer - Video Editor",
+        "tagline", "Rabat-based cinematic stories for weddings, brands, artists, and unforgettable nights.",
         "services", services.findByActiveTrueOrderByNameAsc(),
         "featuredProjects", projects.findByFeaturedTrueOrderByProjectDateDesc(),
         "testimonials", testimonials.findByFeaturedTrue());

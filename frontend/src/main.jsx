@@ -1,16 +1,21 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Calendar, Camera, Check, Clock, Film, Instagram, Lock, Mail, MapPin, Menu, MessageCircle, Phone, Play, Sparkles, User, Video } from 'lucide-react';
+import { Calendar, Camera, Check, Clock, Instagram, Lock, Mail, MapPin, MessageCircle, Phone, Play, Sparkles, Video } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import './styles/app.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const INSTAGRAM_URL = 'https://www.instagram.com/orion.polaris';
+const WHATSAPP_URL = 'https://wa.me/212772604428';
+const PHONE_DISPLAY = '+212 772 604 428';
+const PHONE_TEL = '+212772604428';
+const EMAIL = 'hello@orionpolaris.studio';
 const categories = ['All', 'Photography', 'Videography', 'Video Editing', 'Weddings', 'Events', 'Portraits', 'Commercial', 'Social Media Content'];
 
 const fallbackSite = {
-  brand: 'LensCraft Studio',
-  role: 'Photographer • Videographer • Video Editor',
-  tagline: 'Cinematic stories for weddings, brands, artists, and unforgettable nights.',
+  brand: 'LUMEN ASTRA',
+  role: 'Photographer - Videographer - Video Editor',
+  tagline: 'Rabat-based cinematic stories for weddings, brands, artists, and unforgettable nights.',
   services: [],
   featuredProjects: [],
   testimonials: []
@@ -100,7 +105,7 @@ function PublicSite({ site }) {
           <p className="eyebrow">Personal Brand</p>
           <h2>Frames with atmosphere. Films with pulse. Edits that feel expensive.</h2>
         </div>
-        <p>I build visual stories for couples, artists, founders, venues, and brands that need work with texture, restraint, and emotional clarity.</p>
+        <p>LUMEN ASTRA builds visual stories for couples, artists, founders, venues, and brands that need work with texture, restraint, and emotional clarity.</p>
       </section>
 
       <section className="section" id="portfolio">
@@ -123,7 +128,7 @@ function PublicSite({ site }) {
               <p>{service.description}</p>
               {(service.packages || []).map((pack) => (
                 <div className="package" key={pack.id || pack.name}>
-                  <div><strong>{pack.name}</strong><span>{pack.duration} • {pack.editedAssets} edited assets</span></div>
+                  <div><strong>{pack.name}</strong><span>{pack.duration} - {pack.editedAssets} edited assets</span></div>
                   <b>${Number(pack.price).toLocaleString()}</b>
                   <small>{pack.includes}</small>
                   <button className="btn compact" onClick={() => setBookingService({ service, pack })}>Book This Package</button>
@@ -150,7 +155,7 @@ function ProjectCard({ project }) {
         <span>{project.category}</span>
         <h3>{project.title}</h3>
         <p>{project.description}</p>
-        <small>{project.location} • {project.projectDate || 'Recent'}</small>
+        <small>{project.location} - {project.projectDate || 'Recent'}</small>
       </div>
     </motion.article>
   );
@@ -206,7 +211,7 @@ function Summary({ form, service, pack, onCancel, onConfirm }) {
         <h3>Booking Summary</h3>
         <p>{service?.name} / {pack?.name}</p>
         <p>{form.preferredDate} at {form.preferredTime} in {form.location}</p>
-        <p>{form.name} • {form.phone} • {form.email}</p>
+        <p>{form.name} - {form.phone} - {form.email}</p>
         <div className="actions"><button className="btn ghost" onClick={onCancel}>Edit</button><button className="btn primary" onClick={onConfirm}>Submit Request</button></div>
       </div>
     </div>
@@ -236,7 +241,7 @@ function ClientPortal() {
 
 function AdminDashboard() {
   const [token, setToken] = useState(localStorage.getItem('lenscraft_token'));
-  const [login, setLogin] = useState({ email: 'admin@lenscraft.local', password: 'ChangeMe123!' });
+  const [login, setLogin] = useState({ email: 'admin@orionpolaris.local', password: 'ChangeMe123!' });
   const [data, setData] = useState({ overview: {}, bookings: [], services: [], projects: [], clients: [], testimonials: [], availability: [] });
   const [error, setError] = useState('');
 
@@ -252,7 +257,8 @@ function AdminDashboard() {
   }
 
   async function refresh() {
-    const [overview, bookings, services, projects, clients, testimonials, availability] = await Promise.all(['/admin/overview', '/admin/bookings', '/admin/services', '/admin/portfolio', '/admin/clients', '/admin/testimonials', '/admin/availability'].map((p) => api(p)));
+    const paths = ['/admin/overview', '/admin/bookings', '/admin/services', '/admin/portfolio', '/admin/clients', '/admin/testimonials', '/admin/availability'];
+    const [overview, bookings, services, projects, clients, testimonials, availability] = await Promise.all(paths.map((p) => api(p)));
     setData({ overview, bookings, services, projects, clients, testimonials, availability });
   }
 
@@ -271,11 +277,11 @@ function AdminDashboard() {
       <div className="stats">{Object.entries(data.overview).map(([k, v]) => <div key={k}><span>{k.replace(/([A-Z])/g, ' $1')}</span><strong>{String(v)}</strong></div>)}</div>
       <section className="admin-grid">
         <AdminBlock title="Bookings">
-          {data.bookings.map((b) => <div className="row" key={b.id}><span>{b.reference}<small>{b.client?.name} • {b.preferredDate} {b.preferredTime}</small></span><StatusBadge status={b.status} /><button onClick={() => updateBooking(b.id, 'CONFIRMED')}>Confirm</button><button onClick={() => updateBooking(b.id, 'REJECTED')}>Reject</button></div>)}
+          {data.bookings.map((b) => <div className="row" key={b.id}><span>{b.reference}<small>{b.client?.name} - {b.preferredDate} {b.preferredTime}</small></span><StatusBadge status={b.status} /><button onClick={() => updateBooking(b.id, 'CONFIRMED')}>Confirm</button><button onClick={() => updateBooking(b.id, 'REJECTED')}>Reject</button></div>)}
         </AdminBlock>
         <AdminBlock title="Services & Pricing">{data.services.map((s) => <div className="row" key={s.id}><span>{s.name}<small>{s.packages?.length || 0} packages</small></span></div>)}</AdminBlock>
         <AdminBlock title="Portfolio">{data.projects.map((p) => <div className="row" key={p.id}><span>{p.title}<small>{p.category}</small></span></div>)}</AdminBlock>
-        <AdminBlock title="Clients">{data.clients.map((c) => <div className="row" key={c.id}><span>{c.name}<small>{c.email} • {c.phone}</small></span></div>)}</AdminBlock>
+        <AdminBlock title="Clients">{data.clients.map((c) => <div className="row" key={c.id}><span>{c.name}<small>{c.email} - {c.phone}</small></span></div>)}</AdminBlock>
         <AdminBlock title="Testimonials">{data.testimonials.map((t) => <div className="row" key={t.id}><span>{t.clientName}<small>{t.projectOrService}</small></span></div>)}</AdminBlock>
         <AdminBlock title="Availability">{data.availability.map((a) => <div className="row" key={a.id}><span>{a.date}<small>{a.startTime || 'Full day'} - {a.endTime || 'blocked'}</small></span></div>)}</AdminBlock>
       </section>
@@ -284,15 +290,15 @@ function AdminDashboard() {
 }
 
 function AboutSection() {
-  return <section className="section about"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80" alt="Photographer portrait" /><div><SectionTitle eyebrow="About" title="Director's Eye, Editor's Discipline" /><p>Ten years behind cameras and timelines, shaping weddings, commercial campaigns, portraits, live events, and social launches across Casablanca, Rabat, and Marrakech.</p><ul><li>Specialties: cinematic weddings, branded reels, portraits, live events</li><li>Equipment: full-frame cinema cameras, gimbals, drones, studio lighting, calibrated edit suite</li><li>Philosophy: elegant images should feel honest before they feel perfect.</li></ul></div></section>;
+  return <section className="section about"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80" alt="Portrait of photographer Hamza Elbahi" /><div><SectionTitle eyebrow="About" title="Director's Eye, Editor's Discipline" /><p>Hamza Elbahi is a Rabat-based photographer, videographer, and video editor shaping weddings, commercial campaigns, portraits, live events, and social launches with a cinematic eye.</p><ul><li>Specialties: cinematic weddings, branded reels, portraits, live events</li><li>Equipment: full-frame cinema cameras, gimbals, drones, studio lighting, calibrated edit suite</li><li>Philosophy: elegant images should feel honest before they feel perfect.</li></ul></div></section>;
 }
 
 function Testimonials({ items }) {
-  return <section className="section"><SectionTitle eyebrow="Testimonials" title="Client Notes" /><div className="testimonial-grid">{items.map((t) => <blockquote key={t.id || t.clientName}><p>“{t.review}”</p><cite>{t.clientName}<span>{t.projectOrService}</span></cite></blockquote>)}</div></section>;
+  return <section className="section"><SectionTitle eyebrow="Testimonials" title="Client Notes" /><div className="testimonial-grid">{items.map((t) => <blockquote key={t.id || t.clientName}><p>"{t.review}"</p><cite>{t.clientName}<span>{t.projectOrService}</span></cite></blockquote>)}</div></section>;
 }
 
 function ContactSection() {
-  return <section className="section contact"><SectionTitle eyebrow="Contact" title="Start the Conversation" /><div className="contact-grid"><a href="https://wa.me/212600000000"><MessageCircle /> WhatsApp</a><a href="https://instagram.com/lenscraft"><Instagram /> Instagram</a><a href="mailto:hello@lenscraft.studio"><Mail /> hello@lenscraft.studio</a><a href="tel:+212600000000"><Phone /> +212 600 000 000</a><span><MapPin /> Casablanca, Morocco</span></div></section>;
+  return <section className="section contact"><SectionTitle eyebrow="Contact" title="Start the Conversation" /><div className="contact-grid"><a href={WHATSAPP_URL}><MessageCircle /> WhatsApp</a><a href={INSTAGRAM_URL}><Instagram /> Instagram</a><a href={`mailto:${EMAIL}`}><Mail /> {EMAIL}</a><a href={`tel:${PHONE_TEL}`}><Phone /> {PHONE_DISPLAY}</a><span><MapPin /> Rabat, Morocco</span></div></section>;
 }
 
 function SectionTitle({ eyebrow, title }) {
@@ -309,7 +315,7 @@ function Select({ label, value, onChange, options }) {
 }
 
 function StatusCard({ booking }) {
-  return <div className="status-card"><StatusBadge status={booking.status} /><h3>{booking.reference}</h3><p>{booking.service?.name} / {booking.servicePackage?.name}</p><p>{booking.preferredDate} at {booking.preferredTime}</p><p>{booking.location}</p><p>Payment: {booking.paymentStatus} • Delivery: {booking.deliveryStatus}</p>{booking.photographerNotes && <p>Notes: {booking.photographerNotes}</p>}{booking.secureGalleryUrl && <a className="btn primary" href={booking.secureGalleryUrl}>Open Gallery</a>}</div>;
+  return <div className="status-card"><StatusBadge status={booking.status} /><h3>{booking.reference}</h3><p>{booking.service?.name} / {booking.servicePackage?.name}</p><p>{booking.preferredDate} at {booking.preferredTime}</p><p>{booking.location}</p><p>Payment: {booking.paymentStatus} - Delivery: {booking.deliveryStatus}</p>{booking.photographerNotes && <p>Notes: {booking.photographerNotes}</p>}{booking.secureGalleryUrl && <a className="btn primary" href={booking.secureGalleryUrl}>Open Gallery</a>}</div>;
 }
 
 function StatusBadge({ status }) {
@@ -321,7 +327,7 @@ function AdminBlock({ title, children }) {
 }
 
 function FloatingButtons() {
-  return <div className="floating"><a href="https://wa.me/212600000000" aria-label="WhatsApp"><MessageCircle /></a><a href="https://instagram.com/lenscraft" aria-label="Instagram"><Instagram /></a></div>;
+  return <div className="floating"><a href={WHATSAPP_URL} aria-label="WhatsApp"><MessageCircle /></a><a href={INSTAGRAM_URL} aria-label="Instagram"><Instagram /></a></div>;
 }
 
 const demoServices = [
@@ -329,8 +335,8 @@ const demoServices = [
   { id: 2, name: 'Social Content Studio', description: 'Short-form video and premium stills for creators and brands.', packages: [{ id: 2, name: 'Creator Day', includes: 'Shot list, vertical capture, 12 reels, 40 photos', duration: '4 hours', editedAssets: 52, price: 950 }] }
 ];
 const demoProjects = [
-  { title: 'Noir City Portraits', category: 'Portraits', description: 'Moody editorial portraits with film-inspired color.', location: 'Casablanca', coverImageUrl: 'https://images.unsplash.com/photo-1492447166138-50c3889fccb1?auto=format&fit=crop&w=1600&q=80' },
-  { title: 'Atlas Wedding Story', category: 'Weddings', description: 'A refined wedding film and photo gallery.', location: 'Marrakech', coverImageUrl: 'https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=1600&q=80' },
+  { title: 'Noir City Portraits', category: 'Portraits', description: 'Moody editorial portraits with film-inspired color.', location: 'Rabat', coverImageUrl: 'https://images.unsplash.com/photo-1492447166138-50c3889fccb1?auto=format&fit=crop&w=1600&q=80' },
+  { title: 'Atlas Wedding Story', category: 'Weddings', description: 'A refined wedding film and photo gallery.', location: 'Rabat', coverImageUrl: 'https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=1600&q=80' },
   { title: 'Launch Reel System', category: 'Commercial', description: 'Commercial reels and stills for a hospitality launch.', location: 'Rabat', coverImageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1600&q=80' }
 ];
 const demoTestimonials = [{ clientName: 'Maya R.', projectOrService: 'Wedding Film', review: 'The final film felt like memory, not just coverage. Every detail was intentional.' }];

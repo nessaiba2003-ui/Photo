@@ -43,6 +43,21 @@ docker compose up --build
 Frontend: `http://localhost:8081`  
 Backend: `http://localhost:8080/api`
 
+## Vercel Frontend Deployment
+
+This repository is a full-stack monorepo. Vercel should deploy only the React frontend.
+
+The included `vercel.json` builds `frontend/` and publishes `frontend/dist`.
+
+Recommended Vercel settings:
+
+- Framework Preset: `Vite`
+- Build Command: `npm --prefix frontend install && npm --prefix frontend run build`
+- Output Directory: `frontend/dist`
+- Environment Variable: `VITE_API_URL=https://your-api-domain.com/api`
+
+The Spring Boot backend and PostgreSQL database should be deployed separately on a backend host such as Render, Railway, Fly.io, a VPS, or Docker on a production server.
+
 ## Default Admin
 
 Seeded from environment variables:

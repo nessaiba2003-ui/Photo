@@ -38,5 +38,8 @@ backend/target/
 ### Environment ###
 .env
 
+### Imported working files ###
+incoming-photos/
+
 ### Mac OS ###
 .DS_Store

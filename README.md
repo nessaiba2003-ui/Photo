@@ -1,4 +1,4 @@
-# LUMEN ASTRA
+# ALBATROS
 
 Premium full-stack booking, portfolio, pricing, and admin platform for a photographer, videographer, and video editor.
 
@@ -115,6 +115,7 @@ Spring Boot creates and updates the schema automatically in development. For pro
 
 - Public cinematic homepage, portfolio filters, services/pricing, about, testimonials, contact, and mobile social buttons
 - Booking form with package selection, client details, summary, backend validation, unique reference, and pending status
+- Moroccan dirham pricing calibrated for Rabat/Morocco market positioning
 - Availability and double-booking protection for pending/confirmed sessions
 - Client booking lookup page
 - Admin login and dashboard overview

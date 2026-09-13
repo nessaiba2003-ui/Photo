@@ -22,7 +22,7 @@ public class PublicController {
   @GetMapping("/site")
   Map<String, Object> site() {
     return Map.of(
-        "brand", "LUMEN ASTRA",
+        "brand", "ALBATROS",
         "role", "Photographer - Videographer - Video Editor",
         "tagline", "Rabat-based cinematic stories for weddings, brands, artists, and unforgettable nights.",
         "services", services.findByActiveTrueOrderByNameAsc(),

@@ -9,11 +9,12 @@ const INSTAGRAM_URL = 'https://www.instagram.com/orion.polaris';
 const WHATSAPP_URL = 'https://wa.me/212772604428';
 const PHONE_DISPLAY = '+212 772 604 428';
 const PHONE_TEL = '+212772604428';
-const EMAIL = 'hello@orionpolaris.studio';
+const EMAIL = 'hamzaelbahi.orion@gmail.com';
 const categories = ['All', 'Photography', 'Videography', 'Video Editing', 'Weddings', 'Events', 'Portraits', 'Commercial', 'Social Media Content'];
+const formatPrice = (price) => `${Number(price).toLocaleString('fr-MA')} DH`;
 
 const fallbackSite = {
-  brand: 'LUMEN ASTRA',
+  brand: 'ALBATROS',
   role: 'Photographer - Videographer - Video Editor',
   tagline: 'Rabat-based cinematic stories for weddings, brands, artists, and unforgettable nights.',
   services: [],
@@ -42,13 +43,20 @@ function api(path, options = {}) {
 function App() {
   const [site, setSite] = useState(fallbackSite);
   const [view, setView] = useState('site');
+  const [introDone, setIntroDone] = useState(false);
 
   useEffect(() => {
     api('/public/site').then(setSite).catch(() => setSite(fallbackSite));
   }, []);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => setIntroDone(true), 1900);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
     <>
+      <AnimatePresence>{!introDone && <BrandIntro />}</AnimatePresence>
       <Header brand={site.brand} onView={setView} view={view} />
       <AnimatePresence mode="wait">
         {view === 'site' && <PublicSite key="site" site={site} />}
@@ -57,6 +65,14 @@ function App() {
       </AnimatePresence>
       <FloatingButtons />
     </>
+  );
+}
+
+function BrandIntro() {
+  return (
+    <motion.div className="brand-intro" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7 }}>
+      <motion.img src="/assets/albatros-logo-board.jpeg" alt="ALBATROS creative agency logo" initial={{ opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.9 }} />
+    </motion.div>
   );
 }
 
@@ -90,6 +106,7 @@ function PublicSite({ site }) {
         <div className="hero-media" />
         <div className="hero-content">
           <p className="eyebrow"><Sparkles size={16} /> High-end creative studio</p>
+          <img className="hero-logo" src="/assets/albatros-logo-board.jpeg" alt="ALBATROS creative agency" />
           <h1>{site.brand}</h1>
           <p className="role">{site.role}</p>
           <p className="tagline">{site.tagline}</p>
@@ -105,7 +122,7 @@ function PublicSite({ site }) {
           <p className="eyebrow">Personal Brand</p>
           <h2>Frames with atmosphere. Films with pulse. Edits that feel expensive.</h2>
         </div>
-        <p>LUMEN ASTRA builds visual stories for couples, artists, founders, venues, and brands that need work with texture, restraint, and emotional clarity.</p>
+        <p>ALBATROS builds visual stories for couples, artists, founders, venues, and brands that need work with texture, restraint, and emotional clarity.</p>
       </section>
 
       <section className="section" id="portfolio">
@@ -116,6 +133,7 @@ function PublicSite({ site }) {
         <div className="project-grid">
           {shownProjects.map((project) => <ProjectCard key={project.id || project.title} project={project} />)}
         </div>
+        {shownProjects.length === 0 && <div className="empty-category"><h3>Coming soon</h3><p>This category is waiting for the exact ALBATROS visuals. Send the right set and it will replace this placeholder.</p></div>}
       </section>
 
       <section className="section" id="services">
@@ -129,7 +147,7 @@ function PublicSite({ site }) {
               {(service.packages || []).map((pack) => (
                 <div className="package" key={pack.id || pack.name}>
                   <div><strong>{pack.name}</strong><span>{pack.duration} - {pack.editedAssets} edited assets</span></div>
-                  <b>${Number(pack.price).toLocaleString()}</b>
+                  <b>{formatPrice(pack.price)}</b>
                   <small>{pack.includes}</small>
                   <button className="btn compact" onClick={() => setBookingService({ service, pack })}>Book This Package</button>
                 </div>
@@ -191,7 +209,7 @@ function BookingSection({ services, preselect }) {
         <div className="booking-layout">
           <form className="booking-form" onSubmit={(e) => { e.preventDefault(); setSummary(true); }}>
             <Select label="Service" value={form.serviceId} onChange={(v) => update('serviceId', v)} options={services.map((s) => [s.id, s.name])} />
-            <Select label="Package" value={form.packageId} onChange={(v) => { update('packageId', v); const pack = selectedService?.packages?.find((p) => String(p.id) === String(v)); if (pack) update('duration', pack.duration); }} options={(selectedService?.packages || []).map((p) => [p.id, `${p.name} - $${p.price}`])} />
+            <Select label="Package" value={form.packageId} onChange={(v) => { update('packageId', v); const pack = selectedService?.packages?.find((p) => String(p.id) === String(v)); if (pack) update('duration', pack.duration); }} options={(selectedService?.packages || []).map((p) => [p.id, `${p.name} - ${formatPrice(p.price)}`])} />
             {['preferredDate', 'preferredTime', 'location', 'duration', 'name', 'phone', 'email', 'instagram'].map((name) => <Field key={name} name={name} value={form[name]} onChange={update} />)}
             <label className="field wide"><span>Additional message</span><textarea value={form.message} onChange={(e) => update('message', e.target.value)} /></label>
             <button className="btn primary wide" type="submit"><Calendar size={18} /> Review Booking</button>
@@ -290,7 +308,7 @@ function AdminDashboard() {
 }
 
 function AboutSection() {
-  return <section className="section about"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80" alt="Portrait of photographer Hamza Elbahi" /><div><SectionTitle eyebrow="About" title="Director's Eye, Editor's Discipline" /><p>Hamza Elbahi is a Rabat-based photographer, videographer, and video editor shaping weddings, commercial campaigns, portraits, live events, and social launches with a cinematic eye.</p><ul><li>Specialties: cinematic weddings, branded reels, portraits, live events</li><li>Equipment: full-frame cinema cameras, gimbals, drones, studio lighting, calibrated edit suite</li><li>Philosophy: elegant images should feel honest before they feel perfect.</li></ul></div></section>;
+  return <section className="section about"><figure className="about-portrait"><img src="/assets/hamza-portrait.jpeg" alt="Portrait of Hamza Elbahi" /><figcaption>Hamza Elbahi - ALBATROS</figcaption></figure><div><SectionTitle eyebrow="About Hamza" title="Director's Eye, Editor's Discipline" /><p>Hamza Elbahi is the Rabat-based photographer, videographer, and video editor behind ALBATROS, shaping weddings, commercial campaigns, portraits, live events, and social launches with a cinematic eye.</p><ul><li>Specialties: cinematic weddings, branded reels, portraits, live events</li><li>Equipment: full-frame cinema cameras, gimbals, drones, studio lighting, calibrated edit suite</li><li>Philosophy: elegant images should feel honest before they feel perfect.</li></ul></div></section>;
 }
 
 function Testimonials({ items }) {
@@ -331,13 +349,38 @@ function FloatingButtons() {
 }
 
 const demoServices = [
-  { id: 1, name: 'Wedding Film & Photo', description: 'Cinematic wedding storytelling with editorial portraits and highlight films.', packages: [{ id: 1, name: 'Signature Wedding', includes: 'Full-day coverage, teaser reel, private gallery, highlight film', duration: '8 hours', editedAssets: 450, price: 2200 }] },
-  { id: 2, name: 'Social Content Studio', description: 'Short-form video and premium stills for creators and brands.', packages: [{ id: 2, name: 'Creator Day', includes: 'Shot list, vertical capture, 12 reels, 40 photos', duration: '4 hours', editedAssets: 52, price: 950 }] }
+  { id: 1, name: 'Wedding Film & Photo', description: 'Cinematic wedding storytelling with editorial portraits, candid moments, and a polished highlight film.', packages: [
+    { id: 1, name: 'Intimate Ceremony', includes: 'Ceremony coverage, couple portraits, edited online gallery, 3-5 minute highlight film', duration: '4 hours', editedAssets: 180, price: 5000 },
+    { id: 2, name: 'Signature Wedding', includes: 'Full-day photo and video coverage, teaser reel, private gallery, 8-12 minute cinematic film', duration: '8 hours', editedAssets: 450, price: 9500 },
+    { id: 3, name: 'ALBATROS Premium', includes: 'Full wedding story, two-camera coverage, drone when permitted, teaser, cinematic film, luxury delivery gallery', duration: '12 hours', editedAssets: 700, price: 16000 }
+  ] },
+  { id: 2, name: 'Portrait Session', description: 'Editorial portraits for personal brands, artists, creators, and professional profiles.', packages: [
+    { id: 4, name: 'Essential Portrait', includes: 'One location, guided posing, color correction, retouched selects', duration: '1 hour', editedAssets: 12, price: 700 },
+    { id: 5, name: 'Editorial Portrait', includes: 'Two looks, creative direction, advanced retouching, social-ready crops', duration: '2 hours', editedAssets: 25, price: 1500 }
+  ] },
+  { id: 3, name: 'Events Coverage', description: 'Elegant photo and video coverage for private events, sport, performances, launches, and corporate moments.', packages: [
+    { id: 6, name: 'Event Photo', includes: 'Event photography, curated gallery, color grading, fast online delivery', duration: '3 hours', editedAssets: 150, price: 2500 },
+    { id: 7, name: 'Event Photo + Film', includes: 'Photo coverage, highlight video, vertical recap reel, private delivery link', duration: '4 hours', editedAssets: 220, price: 5500 }
+  ] },
+  { id: 4, name: 'Social Content Studio', description: 'High-impact photo and short-form video sessions built for Instagram, TikTok, launches, and personal brands.', packages: [
+    { id: 8, name: 'Creator Half Day', includes: 'Shot list planning, vertical video capture, 6 edited reels, 45 edited photos', duration: '4 hours', editedAssets: 51, price: 4500 },
+    { id: 9, name: 'Launch Content Day', includes: 'Campaign planning, product/lifestyle capture, 10 reels, 80 photos, delivery calendar', duration: '6 hours', editedAssets: 90, price: 7500 }
+  ] },
+  { id: 5, name: 'Commercial Brand Visuals', description: 'Premium photo, film, and visual communication packages for brands, venues, and campaigns.', packages: [
+    { id: 10, name: 'Brand Starter', includes: 'Creative direction, half-day shoot, edited brand gallery, one hero reel', duration: '5 hours', editedAssets: 61, price: 6500 },
+    { id: 11, name: 'Campaign Film + Photo', includes: 'Full-day production, photo library, campaign film, social cutdowns, usage-ready delivery', duration: '8 hours', editedAssets: 110, price: 12000 }
+  ] }
 ];
 const demoProjects = [
-  { title: 'Noir City Portraits', category: 'Portraits', description: 'Moody editorial portraits with film-inspired color.', location: 'Rabat', coverImageUrl: 'https://images.unsplash.com/photo-1492447166138-50c3889fccb1?auto=format&fit=crop&w=1600&q=80' },
-  { title: 'Atlas Wedding Story', category: 'Weddings', description: 'A refined wedding film and photo gallery.', location: 'Rabat', coverImageUrl: 'https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=1600&q=80' },
-  { title: 'Launch Reel System', category: 'Commercial', description: 'Commercial reels and stills for a hospitality launch.', location: 'Rabat', coverImageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1600&q=80' }
+  { title: 'Between Earth & Sky', category: 'Photography', description: 'Open horizons, last light, and night skies with a cinematic sense of scale.', location: 'Rabat / Morocco', projectDate: '2026', coverImageUrl: '/assets/portfolio-clean/photography-quiet-horizon.jpeg' },
+  { title: 'Cosmic Frames', category: 'Photography', description: 'Moon textures, distant light, and quiet celestial compositions.', location: 'Morocco', projectDate: '2026', coverImageUrl: '/assets/portfolio-clean/photography-lunar-texture.jpeg' },
+  { title: 'Cosmic Abstraction', category: 'Video Editing', description: 'A short abstract motion piece shaped for atmosphere, rhythm, and screen impact.', location: 'Studio Edit', projectDate: '2026', coverImageUrl: '/assets/portfolio-clean/photography-distant-light.jpeg', videoUrl: '/assets/portfolio-clean/videography-cosmic-abstraction.mp4' },
+  { title: 'Motion in Silence', category: 'Events', description: 'Live movement, performance, sport, and field moments captured with energy and restraint.', location: 'Morocco', projectDate: '2026', coverImageUrl: '/assets/portfolio-clean/events-fire-performance.jpg' },
+  { title: 'Stillness Portraits', category: 'Portraits', description: 'Minimal portrait work built around expression, shadow, and presence.', location: 'Rabat', projectDate: '2026', coverImageUrl: '/assets/portfolio-clean/portrait-stillness.jpg' },
+  { title: 'Find the Light', category: 'Portraits', description: 'A stylized portrait study balancing mystery, contrast, and soft light.', location: 'Rabat', projectDate: '2026', coverImageUrl: '/assets/portfolio-clean/portrait-find-the-light.jpg' },
+  { title: 'ALBATROS Brand System', category: 'Commercial', description: 'Brand imagery and visual direction for a premium photo, film, and communication identity.', location: 'Rabat', projectDate: '2026', coverImageUrl: '/assets/portfolio-clean/commercial-albatros-brand-system.jpeg' },
+  { title: 'Visuals That Move', category: 'Social Media Content', description: 'Cinematic brand visuals prepared for high-impact Instagram presentation.', location: 'Rabat', projectDate: '2026', coverImageUrl: '/assets/hamza-albatros.jpeg' },
+  { title: 'Cosmic Motion', category: 'Videography', description: 'Atmospheric moving image work for poetic, visual-first storytelling.', location: 'Studio Edit', projectDate: '2026', coverImageUrl: '/assets/portfolio-clean/photography-under-stars.jpg', videoUrl: '/assets/portfolio-clean/videography-cosmic-abstraction.mp4' }
 ];
 const demoTestimonials = [{ clientName: 'Maya R.', projectOrService: 'Wedding Film', review: 'The final film felt like memory, not just coverage. Every detail was intentional.' }];
 

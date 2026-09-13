@@ -58,6 +58,9 @@ public class AdminCrudController {
     return packages.save(request);
   }
 
+  @DeleteMapping("/packages/{id}")
+  void deletePackage(@PathVariable Long id) { packages.deleteById(id); }
+
   @GetMapping("/portfolio")
   List<PortfolioProject> portfolio() { return projects.findAll(); }
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Calendar, Check, Clock, Instagram, Lock, Mail, MapPin, MessageCircle, Moon, Phone, Play, Sparkles, Sun, Video } from 'lucide-react';
+import { Calendar, Check, Clock, Instagram, Lock, Mail, MapPin, MessageCircle, Moon, Pencil, Phone, Play, Plus, Save, Sparkles, Sun, Trash2, Video, WifiOff } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import './styles/app.css';
 
@@ -21,6 +21,44 @@ const fallbackSite = {
   featuredProjects: [],
   testimonials: []
 };
+
+const settingsDefaults = {
+  brand: 'ALBATROS',
+  founder: 'Hamza Elbahi',
+  email: EMAIL,
+  phone: PHONE_DISPLAY,
+  instagram: INSTAGRAM_URL,
+  whatsapp: WHATSAPP_URL,
+  location: 'Rabat, Morocco',
+  tagline: fallbackSite.tagline
+};
+
+const localKey = (name) => `albatros_admin_${name}`;
+const readLocal = (name, fallback) => JSON.parse(localStorage.getItem(localKey(name)) || 'null') || fallback;
+const writeLocal = (name, value) => localStorage.setItem(localKey(name), JSON.stringify(value));
+
+function makeOverview(data) {
+  return {
+    totalBookings: data.bookings.length,
+    pendingBookings: data.bookings.filter((b) => b.status === 'PENDING').length,
+    confirmedBookings: data.bookings.filter((b) => b.status === 'CONFIRMED').length,
+    completedProjects: data.bookings.filter((b) => b.status === 'COMPLETED').length,
+    revenue: data.bookings.filter((b) => b.paymentStatus === 'PAID').reduce((sum, b) => sum + Number(b.servicePackage?.price || 0), 0)
+  };
+}
+
+function localAdminData() {
+  const data = {
+    bookings: readLocal('bookings', []),
+    services: readLocal('services', demoServices),
+    projects: readLocal('projects', demoProjects),
+    clients: readLocal('clients', []),
+    testimonials: readLocal('testimonials', demoTestimonials),
+    availability: readLocal('availability', []),
+    settings: readLocal('settings', settingsDefaults)
+  };
+  return { ...data, overview: makeOverview(data) };
+}
 
 function api(path, options = {}) {
   const token = localStorage.getItem('lenscraft_token');
@@ -86,7 +124,8 @@ function Header({ brand, onView, view, theme, onThemeChange }) {
   return (
     <header className="topbar">
       <button className="brand" onClick={() => onView('site')} aria-label="Open home">
-        <img src={theme === 'light' ? '/assets/albatros-logo-light.png' : '/assets/albatros-logo.png'} alt={brand} />
+        <img className="dark-logo" src="/assets/albatros-logo.png" alt={brand} />
+        <img className="light-logo" src="/assets/albatros-logo-light.png" alt={brand} />
       </button>
       <nav>
         {['site', 'client', 'admin'].map((item) => (
@@ -170,6 +209,7 @@ function PublicSite({ site }) {
       <AboutSection />
       <Testimonials items={site.testimonials?.length ? site.testimonials : demoTestimonials} />
       <ContactSection />
+      <Footer />
     </motion.main>
   );
 }
@@ -269,7 +309,11 @@ function ClientPortal() {
 function AdminDashboard() {
   const [token, setToken] = useState(localStorage.getItem('lenscraft_token'));
   const [login, setLogin] = useState({ email: 'admin@orionpolaris.local', password: 'ChangeMe123!' });
-  const [data, setData] = useState({ overview: {}, bookings: [], services: [], projects: [], clients: [], testimonials: [], availability: [] });
+  const [mode, setMode] = useState(localStorage.getItem('albatros_admin_mode') || 'api');
+  const [activeTab, setActiveTab] = useState('overview');
+  const [editing, setEditing] = useState(null);
+  const [draft, setDraft] = useState({});
+  const [data, setData] = useState(() => localAdminData());
   const [error, setError] = useState('');
 
   useEffect(() => { if (token) refresh(); }, [token]);
@@ -279,40 +323,189 @@ function AdminDashboard() {
     try {
       const result = await api('/auth/login', { method: 'POST', body: JSON.stringify(login) });
       localStorage.setItem('lenscraft_token', result.token);
+      localStorage.setItem('albatros_admin_mode', 'api');
+      setMode('api');
       setToken(result.token);
-    } catch (err) { setError(err.message); }
+      setError('');
+    } catch (err) {
+      localStorage.setItem('lenscraft_token', 'local-draft-admin');
+      localStorage.setItem('albatros_admin_mode', 'local');
+      setMode('local');
+      setToken('local-draft-admin');
+      setData(localAdminData());
+      setError('Backend offline. Opened local draft mode so you can edit content now.');
+    }
   }
 
   async function refresh() {
-    const paths = ['/admin/overview', '/admin/bookings', '/admin/services', '/admin/portfolio', '/admin/clients', '/admin/testimonials', '/admin/availability'];
-    const [overview, bookings, services, projects, clients, testimonials, availability] = await Promise.all(paths.map((p) => api(p)));
-    setData({ overview, bookings, services, projects, clients, testimonials, availability });
+    if (mode === 'local' || token === 'local-draft-admin') {
+      setData(localAdminData());
+      return;
+    }
+    try {
+      const paths = ['/admin/overview', '/admin/bookings', '/admin/services', '/admin/portfolio', '/admin/clients', '/admin/testimonials', '/admin/availability'];
+      const [overview, bookings, services, projects, clients, testimonials, availability] = await Promise.all(paths.map((p) => api(p)));
+      setData({ overview, bookings, services, projects, clients, testimonials, availability, settings: readLocal('settings', settingsDefaults) });
+      setError('');
+    } catch (err) {
+      localStorage.setItem('albatros_admin_mode', 'local');
+      setMode('local');
+      setData(localAdminData());
+      setError('Backend unavailable. You are editing local drafts.');
+    }
   }
 
   async function updateBooking(id, status) {
+    if (mode === 'local') {
+      const bookings = data.bookings.map((b) => b.id === id ? { ...b, status } : b);
+      saveLocal('bookings', bookings);
+      return;
+    }
     await api(`/admin/bookings/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
     refresh();
   }
 
+  function saveLocal(name, value) {
+    writeLocal(name, value);
+    const next = localAdminData();
+    setData(next);
+  }
+
+  function startCreate(type) {
+    const defaults = {
+      services: { name: '', description: '', active: true, packages: [] },
+      projects: { title: '', category: 'Photography', description: '', location: 'Rabat', projectDate: '2026', coverImageUrl: '/assets/albatros-opening.jpeg', featured: true },
+      testimonials: { clientName: '', review: '', projectOrService: '', photoUrl: '', featured: true },
+      availability: { date: '', startTime: '', endTime: '', reason: '', blocked: true },
+      settings: data.settings
+    };
+    setEditing({ type, id: null });
+    setDraft(defaults[type]);
+  }
+
+  function startEdit(type, item) {
+    setEditing({ type, id: item.id || 'settings' });
+    setDraft({ ...item });
+  }
+
+  async function saveDraft(type) {
+    if (type === 'settings') {
+      saveLocal('settings', draft);
+      setEditing(null);
+      return;
+    }
+
+    if (mode === 'api') {
+      const endpoints = { services: '/admin/services', projects: '/admin/portfolio', testimonials: '/admin/testimonials', availability: '/admin/availability' };
+      await api(endpoints[type], { method: 'POST', body: JSON.stringify(draft) });
+      setEditing(null);
+      refresh();
+      return;
+    }
+
+    const collection = data[type] || [];
+    const item = draft.id ? draft : { ...draft, id: Date.now() };
+    const next = draft.id ? collection.map((existing) => existing.id === draft.id ? item : existing) : [item, ...collection];
+    saveLocal(type, next);
+    setEditing(null);
+  }
+
+  async function deleteItem(type, id) {
+    if (mode === 'api') {
+      const endpoints = { services: '/admin/services', projects: '/admin/portfolio', testimonials: '/admin/testimonials', availability: '/admin/availability' };
+      await api(`${endpoints[type]}/${id}`, { method: 'DELETE' });
+      refresh();
+      return;
+    }
+    saveLocal(type, data[type].filter((item) => item.id !== id));
+  }
+
+  function logout() {
+    localStorage.removeItem('lenscraft_token');
+    setToken(null);
+    setMode('api');
+    setEditing(null);
+  }
+
   if (!token) {
-    return <main className="panel-page"><form className="login-panel" onSubmit={signIn}><Lock /><h2>Admin Login</h2><Field name="email" value={login.email} onChange={(n, v) => setLogin({ ...login, [n]: v })} /><Field name="password" value={login.password} onChange={(n, v) => setLogin({ ...login, [n]: v })} /><button className="btn primary">Sign In</button>{error && <p className="error">{error}</p>}</form></main>;
+    return <main className="panel-page"><form className="login-panel" onSubmit={signIn}><img className="auth-logo dark-logo" src="/assets/albatros-logo.png" alt="ALBATROS" /><img className="auth-logo light-logo" src="/assets/albatros-logo-light.png" alt="ALBATROS" /><Lock /><h2>Admin Login</h2><p className="admin-help">If the backend is online, this signs into the secure dashboard. If it is offline, it opens local draft mode for editing site content before deployment.</p><Field name="email" value={login.email} onChange={(n, v) => setLogin({ ...login, [n]: v })} /><Field name="password" value={login.password} onChange={(n, v) => setLogin({ ...login, [n]: v })} /><button className="btn primary">Sign In</button>{error && <p className="error">{error}</p>}</form></main>;
   }
 
   return (
     <main className="admin-shell">
-      <SectionTitle eyebrow="Admin Dashboard" title="Studio Operations" />
-      <div className="stats">{Object.entries(data.overview).map(([k, v]) => <div key={k}><span>{k.replace(/([A-Z])/g, ' $1')}</span><strong>{String(v)}</strong></div>)}</div>
-      <section className="admin-grid">
-        <AdminBlock title="Bookings">
-          {data.bookings.map((b) => <div className="row" key={b.id}><span>{b.reference}<small>{b.client?.name} - {b.preferredDate} {b.preferredTime}</small></span><StatusBadge status={b.status} /><button onClick={() => updateBooking(b.id, 'CONFIRMED')}>Confirm</button><button onClick={() => updateBooking(b.id, 'REJECTED')}>Reject</button></div>)}
-        </AdminBlock>
-        <AdminBlock title="Services & Pricing">{data.services.map((s) => <div className="row" key={s.id}><span>{s.name}<small>{s.packages?.length || 0} packages</small></span></div>)}</AdminBlock>
-        <AdminBlock title="Portfolio">{data.projects.map((p) => <div className="row" key={p.id}><span>{p.title}<small>{p.category}</small></span></div>)}</AdminBlock>
-        <AdminBlock title="Clients">{data.clients.map((c) => <div className="row" key={c.id}><span>{c.name}<small>{c.email} - {c.phone}</small></span></div>)}</AdminBlock>
-        <AdminBlock title="Testimonials">{data.testimonials.map((t) => <div className="row" key={t.id}><span>{t.clientName}<small>{t.projectOrService}</small></span></div>)}</AdminBlock>
-        <AdminBlock title="Availability">{data.availability.map((a) => <div className="row" key={a.id}><span>{a.date}<small>{a.startTime || 'Full day'} - {a.endTime || 'blocked'}</small></span></div>)}</AdminBlock>
-      </section>
+      <div className="admin-head">
+        <SectionTitle eyebrow="Admin Dashboard" title="Studio Operations" />
+        <div className="admin-actions">
+          {mode === 'local' && <span className="mode-pill"><WifiOff size={15} /> Local draft mode</span>}
+          <button className="btn ghost" onClick={logout}>Logout</button>
+        </div>
+      </div>
+      {error && <p className="admin-alert">{error}</p>}
+      <div className="admin-tabs">
+        {['overview', 'bookings', 'services', 'portfolio', 'testimonials', 'availability', 'settings'].map((tab) => <button key={tab} className={activeTab === tab ? 'active' : ''} onClick={() => { setActiveTab(tab); setEditing(null); }}>{tab}</button>)}
+      </div>
+
+      {activeTab === 'overview' && <>
+        <div className="stats">{Object.entries(data.overview).map(([k, v]) => <div key={k}><span>{k.replace(/([A-Z])/g, ' $1')}</span><strong>{k === 'revenue' ? formatPrice(v) : String(v)}</strong></div>)}</div>
+        <section className="creative-board">
+          <h3>Creative Ideas</h3>
+          <p>Feature a monthly “Visual Story” on the homepage, mark unfinished categories as coming soon, and prepare Instagram-first project cards with one hero image, one vertical reel, and a short caption.</p>
+        </section>
+      </>}
+
+      {activeTab === 'bookings' && <AdminBlock title="Bookings">
+        {data.bookings.length === 0 && <p className="admin-empty">No bookings yet.</p>}
+        {data.bookings.map((b) => <div className="row" key={b.id}><span>{b.reference}<small>{b.client?.name} - {b.preferredDate} {b.preferredTime}</small></span><StatusBadge status={b.status} /><button onClick={() => updateBooking(b.id, 'CONFIRMED')}>Confirm</button><button onClick={() => updateBooking(b.id, 'REJECTED')}>Reject</button></div>)}
+      </AdminBlock>}
+
+      {activeTab === 'services' && <EditableCollection title="Services & Pricing" type="services" items={data.services} onCreate={startCreate} onEdit={startEdit} onDelete={deleteItem} fields={['name', 'description']} renderMeta={(item) => `${item.packages?.length || 0} packages`} />}
+      {activeTab === 'portfolio' && <EditableCollection title="Portfolio Posts" type="projects" items={data.projects} onCreate={startCreate} onEdit={startEdit} onDelete={deleteItem} fields={['title', 'category', 'description', 'location', 'projectDate', 'coverImageUrl']} renderMeta={(item) => `${item.category} - ${item.location}`} />}
+      {activeTab === 'testimonials' && <EditableCollection title="Testimonials" type="testimonials" items={data.testimonials} onCreate={startCreate} onEdit={startEdit} onDelete={deleteItem} fields={['clientName', 'projectOrService', 'review', 'photoUrl']} renderMeta={(item) => item.projectOrService} />}
+      {activeTab === 'availability' && <EditableCollection title="Availability" type="availability" items={data.availability} onCreate={startCreate} onEdit={startEdit} onDelete={deleteItem} fields={['date', 'startTime', 'endTime', 'reason']} renderMeta={(item) => `${item.startTime || 'Full day'} - ${item.endTime || 'blocked'}`} />}
+      {activeTab === 'settings' && <AdminBlock title="Settings"><button className="btn primary admin-add" onClick={() => startEdit('settings', data.settings)}><Pencil size={17} /> Edit Settings</button><div className="settings-list">{Object.entries(data.settings).map(([key, value]) => <p key={key}><strong>{key}</strong><span>{String(value)}</span></p>)}</div></AdminBlock>}
+
+      {editing && <EditorModal type={editing.type} draft={draft} setDraft={setDraft} onClose={() => setEditing(null)} onSave={() => saveDraft(editing.type)} />}
     </main>
+  );
+}
+
+function EditableCollection({ title, type, items, onCreate, onEdit, onDelete, renderMeta }) {
+  return (
+    <AdminBlock title={title}>
+      <button className="btn primary admin-add" onClick={() => onCreate(type)}><Plus size={17} /> Add</button>
+      {items.length === 0 && <p className="admin-empty">Nothing here yet.</p>}
+      {items.map((item) => <div className="row editable-row" key={item.id || item.title || item.name || item.clientName}><span>{item.name || item.title || item.clientName || item.date}<small>{renderMeta(item)}</small></span><button onClick={() => onEdit(type, item)}><Pencil size={15} /> Edit</button><button onClick={() => onDelete(type, item.id)}><Trash2 size={15} /> Delete</button></div>)}
+    </AdminBlock>
+  );
+}
+
+function EditorModal({ type, draft, setDraft, onClose, onSave }) {
+  const fieldsByType = {
+    services: ['name', 'description'],
+    projects: ['title', 'category', 'description', 'location', 'projectDate', 'coverImageUrl'],
+    testimonials: ['clientName', 'projectOrService', 'review', 'photoUrl'],
+    availability: ['date', 'startTime', 'endTime', 'reason'],
+    settings: ['brand', 'founder', 'email', 'phone', 'instagram', 'whatsapp', 'location', 'tagline']
+  };
+  return (
+    <div className="modal-backdrop">
+      <div className="modal editor-modal">
+        <h3>{draft.id ? 'Modify' : 'Add'} {type}</h3>
+        <div className="editor-grid">
+          {fieldsByType[type].map((field) => (
+            <label className={['description', 'review', 'tagline'].includes(field) ? 'field wide' : 'field'} key={field}>
+              <span>{field.replace(/([A-Z])/g, ' $1')}</span>
+              {['description', 'review', 'tagline'].includes(field)
+                ? <textarea value={draft[field] || ''} onChange={(e) => setDraft({ ...draft, [field]: e.target.value })} />
+                : field === 'category'
+                  ? <select value={draft[field] || 'Photography'} onChange={(e) => setDraft({ ...draft, [field]: e.target.value })}>{categories.filter((c) => c !== 'All').map((category) => <option key={category}>{category}</option>)}</select>
+                  : <input value={draft[field] || ''} onChange={(e) => setDraft({ ...draft, [field]: e.target.value })} />}
+            </label>
+          ))}
+        </div>
+        <div className="actions"><button className="btn ghost" onClick={onClose}>Cancel</button><button className="btn primary" onClick={onSave}><Save size={17} /> Save</button></div>
+      </div>
+    </div>
   );
 }
 
@@ -326,6 +519,10 @@ function Testimonials({ items }) {
 
 function ContactSection() {
   return <section className="section contact"><SectionTitle eyebrow="Contact" title="Start the Conversation" /><div className="contact-grid"><a href={WHATSAPP_URL}><MessageCircle /> WhatsApp</a><a href={INSTAGRAM_URL}><Instagram /> Instagram</a><a href={`mailto:${EMAIL}`}><Mail /> {EMAIL}</a><a href={`tel:${PHONE_TEL}`}><Phone /> {PHONE_DISPLAY}</a><span><MapPin /> Rabat, Morocco</span></div></section>;
+}
+
+function Footer() {
+  return <footer className="site-footer"><img className="footer-logo dark-logo" src="/assets/albatros-logo.png" alt="ALBATROS" /><img className="footer-logo light-logo" src="/assets/albatros-logo-light.png" alt="ALBATROS" /><p>Photo / Film / Communication</p><span>Rabat, Morocco - Visuals that move</span></footer>;
 }
 
 function SectionTitle({ eyebrow, title }) {

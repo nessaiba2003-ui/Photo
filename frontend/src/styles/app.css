@@ -1,5 +1,5 @@
 :root {
-  color-scheme: dark;
+  color-scheme: dark light;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: #081e3a;
   color: #f5f7fa;
@@ -12,11 +12,46 @@
   --green: #38b2f6;
   --navy: #081e3a;
   --blue: #3882f6;
+  --surface-a: #06162b;
+  --surface-b: #071a32;
+  --button-ink: #12110f;
+  --hero-overlay-a: rgba(3, 13, 27, .12);
+  --hero-overlay-b: rgba(3, 13, 27, .88);
+  --hero-overlay-c: rgba(3, 13, 27, .76);
+  --hero-overlay-d: rgba(8, 30, 58, .16);
+  --field-bg: rgba(255, 255, 255, .07);
+  --topbar-bg: rgba(3, 13, 27, .72);
+  --project-fade: rgba(0, 0, 0, .9);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  background: #f5f7fa;
+  color: #081e3a;
+  --ink: #081e3a;
+  --muted: #314052;
+  --line: rgba(8, 30, 58, .16);
+  --panel: rgba(255, 255, 255, .74);
+  --gold: #081e3a;
+  --rose: #3882f6;
+  --green: #0f6fc8;
+  --navy: #f5f7fa;
+  --blue: #3882f6;
+  --surface-a: #fff7fa;
+  --surface-b: #edf3fb;
+  --button-ink: #f5f7fa;
+  --hero-overlay-a: rgba(245, 247, 250, .08);
+  --hero-overlay-b: rgba(245, 247, 250, .92);
+  --hero-overlay-c: rgba(245, 247, 250, .82);
+  --hero-overlay-d: rgba(245, 247, 250, .20);
+  --field-bg: rgba(255, 255, 255, .82);
+  --topbar-bg: rgba(245, 247, 250, .78);
+  --project-fade: rgba(8, 30, 58, .76);
 }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; background: var(--navy); overflow-x: hidden; }
+body { margin: 0; background: var(--navy); color: var(--ink); overflow-x: hidden; }
 button, input, select, textarea { font: inherit; }
 
 .topbar {
@@ -29,7 +64,7 @@ button, input, select, textarea { font: inherit; }
   justify-content: space-between;
   align-items: center;
   padding: 14px clamp(16px, 4vw, 56px);
-  background: rgba(3, 13, 27, .72);
+  background: var(--topbar-bg);
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(18px);
 }
@@ -43,10 +78,29 @@ button, input, select, textarea { font: inherit; }
 
 .brand {
   display: inline-flex;
-  gap: 9px;
   align-items: center;
-  font-weight: 800;
-  letter-spacing: 0;
+  width: clamp(130px, 18vw, 220px);
+  height: 48px;
+  padding: 0;
+}
+
+.brand img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.theme-toggle {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
 }
 
 nav { display: flex; gap: 6px; }
@@ -74,9 +128,9 @@ nav button.active, .filters button.active {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(3,13,27,.12), rgba(3,13,27,.88)),
-    linear-gradient(90deg, rgba(3,13,27,.76), rgba(8,30,58,.16) 72%),
-    url("/assets/hamza-albatros.jpeg") center/cover;
+    linear-gradient(180deg, var(--hero-overlay-a), var(--hero-overlay-b)),
+    linear-gradient(90deg, var(--hero-overlay-c), var(--hero-overlay-d) 72%),
+    url("/assets/albatros-opening.jpeg") center/cover;
   transform: scale(1.02);
 }
 
@@ -90,21 +144,9 @@ nav button.active, .filters button.active {
 }
 
 .brand-intro img {
-  width: min(82vw, 820px);
-  max-height: 78vh;
-  object-fit: contain;
-  filter: drop-shadow(0 28px 80px rgba(56, 130, 246, .26));
-}
-
-.hero-logo {
-  width: min(320px, 74vw);
-  aspect-ratio: 3 / 1.4;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  object-position: left center;
-  border-radius: 8px;
-  border: 1px solid rgba(201, 214, 232, .18);
-  margin-bottom: 22px;
-  box-shadow: 0 28px 80px rgba(0, 0, 0, .34);
 }
 
 .hero-content {
@@ -133,6 +175,20 @@ h1 {
   letter-spacing: 0;
 }
 
+.brand-name-logo {
+  display: block;
+  width: min(720px, 92vw);
+  max-height: 330px;
+  object-fit: contain;
+  object-position: left center;
+  margin: 0 0 18px;
+  filter: drop-shadow(0 28px 70px rgba(0, 0, 0, .55));
+}
+
+.light-logo { display: none; }
+:root[data-theme="light"] .dark-logo { display: none; }
+:root[data-theme="light"] .light-logo { display: block; }
+
 h2 {
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(2.05rem, 7vw, 5rem);
@@ -141,7 +197,7 @@ h2 {
 }
 
 .role { color: var(--muted); font-size: clamp(1rem, 2vw, 1.35rem); }
-.tagline { max-width: 680px; color: #eee5d6; font-size: clamp(1.08rem, 3vw, 1.55rem); }
+.tagline { max-width: 680px; color: var(--muted); font-size: clamp(1.08rem, 3vw, 1.55rem); }
 
 .actions, .contact-grid, .filters { display: flex; gap: 12px; flex-wrap: wrap; }
 .btn {
@@ -157,7 +213,7 @@ h2 {
   text-decoration: none;
   cursor: pointer;
 }
-.btn.primary { background: var(--ink); color: #12110f; border-color: var(--ink); font-weight: 800; }
+.btn.primary { background: var(--ink); color: var(--button-ink); border-color: var(--ink); font-weight: 800; }
 .btn.ghost { background: rgba(255,255,255,.07); }
 .btn.compact { width: 100%; min-height: 38px; padding: 9px 12px; }
 
@@ -167,7 +223,7 @@ h2 {
   grid-template-columns: minmax(0, 1.3fr) minmax(280px, .7fr);
   gap: 36px;
   align-items: end;
-  background: #06162b;
+  background: var(--surface-a);
 }
 .intro p:last-child, .about p, .service-card p { color: var(--muted); line-height: 1.75; }
 
@@ -206,7 +262,7 @@ h2 {
   position: absolute;
   inset: auto 0 0;
   padding: 24px;
-  background: linear-gradient(transparent, rgba(0,0,0,.9));
+  background: linear-gradient(transparent, var(--project-fade));
 }
 .project-card span, small { color: var(--gold); }
 .project-card p, small { color: var(--muted); line-height: 1.55; }
@@ -248,7 +304,7 @@ h2 {
 .package span, .package small { display: block; color: var(--muted); }
 .package b { color: var(--green); }
 
-.booking { background: #071a32; }
+.booking { background: var(--surface-b); }
 .booking-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 330px;
@@ -271,7 +327,7 @@ input, select, textarea {
   min-height: 48px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255,255,255,.07);
+  background: var(--field-bg);
   color: var(--ink);
   padding: 12px 13px;
   outline: none;
@@ -291,7 +347,7 @@ textarea { min-height: 120px; resize: vertical; }
   width: min(560px, 100%);
   border-radius: 8px;
   border: 1px solid var(--line);
-  background: #06162b;
+  background: var(--surface-a);
   padding: 28px;
 }
 
@@ -344,7 +400,7 @@ blockquote p { font-size: 1.2rem; line-height: 1.55; }
 cite { display: grid; gap: 4px; color: var(--ink); font-style: normal; }
 cite span { color: var(--gold); }
 
-.contact { background: #06162b; }
+.contact { background: var(--surface-a); }
 .contact-grid a, .contact-grid span {
   min-height: 56px;
   display: inline-flex;
@@ -379,7 +435,7 @@ cite span { color: var(--gold); }
   min-height: 100vh;
   padding: 110px clamp(18px, 5vw, 72px) 72px;
   background:
-    linear-gradient(rgba(3,13,27,.89), rgba(3,13,27,.96)),
+    linear-gradient(color-mix(in srgb, var(--navy) 90%, transparent), color-mix(in srgb, var(--navy) 96%, transparent)),
     url("/assets/albatros-brand-system.jpeg") center/cover fixed;
 }
 .portal-panel, .login-panel { max-width: 760px; margin: 0 auto; }
@@ -431,6 +487,7 @@ cite span { color: var(--gold); }
 
 @media (max-width: 640px) {
   .topbar { align-items: flex-start; gap: 10px; flex-direction: column; }
+  .theme-toggle { position: absolute; right: 16px; top: 14px; }
   nav { width: 100%; overflow-x: auto; }
   .hero { min-height: 92vh; padding-top: 132px; }
   .actions .btn { width: 100%; }

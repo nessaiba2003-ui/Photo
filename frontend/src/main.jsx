@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Calendar, Camera, Check, Clock, Instagram, Lock, Mail, MapPin, MessageCircle, Phone, Play, Sparkles, Video } from 'lucide-react';
+import { Calendar, Check, Clock, Instagram, Lock, Mail, MapPin, MessageCircle, Moon, Phone, Play, Sparkles, Sun, Video } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import './styles/app.css';
 
@@ -44,6 +44,7 @@ function App() {
   const [site, setSite] = useState(fallbackSite);
   const [view, setView] = useState('site');
   const [introDone, setIntroDone] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('albatros_theme') || 'dark');
 
   useEffect(() => {
     api('/public/site').then(setSite).catch(() => setSite(fallbackSite));
@@ -54,10 +55,15 @@ function App() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem('albatros_theme', theme);
+  }, [theme]);
+
   return (
     <>
       <AnimatePresence>{!introDone && <BrandIntro />}</AnimatePresence>
-      <Header brand={site.brand} onView={setView} view={view} />
+      <Header brand={site.brand} onView={setView} view={view} theme={theme} onThemeChange={() => setTheme(theme === 'dark' ? 'light' : 'dark')} />
       <AnimatePresence mode="wait">
         {view === 'site' && <PublicSite key="site" site={site} />}
         {view === 'client' && <ClientPortal key="client" />}
@@ -71,16 +77,16 @@ function App() {
 function BrandIntro() {
   return (
     <motion.div className="brand-intro" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7 }}>
-      <motion.img src="/assets/albatros-logo-board.jpeg" alt="ALBATROS creative agency logo" initial={{ opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.9 }} />
+      <motion.img src="/assets/albatros-opening.jpeg" alt="ALBATROS cinematic opening visual" initial={{ opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.9 }} />
     </motion.div>
   );
 }
 
-function Header({ brand, onView, view }) {
+function Header({ brand, onView, view, theme, onThemeChange }) {
   return (
     <header className="topbar">
       <button className="brand" onClick={() => onView('site')} aria-label="Open home">
-        <Camera size={18} /> {brand}
+        <img src={theme === 'light' ? '/assets/albatros-logo-light.png' : '/assets/albatros-logo.png'} alt={brand} />
       </button>
       <nav>
         {['site', 'client', 'admin'].map((item) => (
@@ -89,6 +95,9 @@ function Header({ brand, onView, view }) {
           </button>
         ))}
       </nav>
+      <button className="theme-toggle" type="button" onClick={onThemeChange} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+      </button>
     </header>
   );
 }
@@ -106,8 +115,8 @@ function PublicSite({ site }) {
         <div className="hero-media" />
         <div className="hero-content">
           <p className="eyebrow"><Sparkles size={16} /> High-end creative studio</p>
-          <img className="hero-logo" src="/assets/albatros-logo-board.jpeg" alt="ALBATROS creative agency" />
-          <h1>{site.brand}</h1>
+          <img className="brand-name-logo dark-logo" src="/assets/albatros-logo.png" alt={site.brand} />
+          <img className="brand-name-logo light-logo" src="/assets/albatros-logo-light.png" alt={site.brand} />
           <p className="role">{site.role}</p>
           <p className="tagline">{site.tagline}</p>
           <div className="actions">

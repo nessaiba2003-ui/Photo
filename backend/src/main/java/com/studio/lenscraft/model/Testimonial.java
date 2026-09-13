@@ -19,7 +19,11 @@ public class Testimonial {
   @Column(nullable = false, length = 1600)
   private String review;
 
+  @Column(length = 1600)
+  private String reviewFr;
+
   private String photoUrl;
   private String projectOrService;
+  private String projectOrServiceFr;
   private boolean featured = true;
 }

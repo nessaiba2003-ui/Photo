@@ -9,7 +9,7 @@
   --panel: rgba(11, 31, 53, .72);
   --gold: #B9DFFF;
   --rose: #2E9BFF;
-  --green: #2E9BFF;
+  --success: #2E9BFF;
   --navy: #050B14;
   --blue: #1677C8;
   --bright-blue: #2E9BFF;
@@ -36,7 +36,7 @@
   --panel: rgba(252, 251, 248, .84);
   --gold: #081e3a;
   --rose: #1677C8;
-  --green: #1677C8;
+  --success: #1677C8;
   --navy: #F7F5F0;
   --blue: #1677C8;
   --bright-blue: #2E9BFF;
@@ -102,7 +102,14 @@ button, input, select, textarea { font: inherit; }
   object-position: left center;
 }
 
-.theme-toggle {
+.topbar-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-toggle,
+.language-toggle {
   width: 42px;
   height: 42px;
   display: grid;
@@ -115,7 +122,16 @@ button, input, select, textarea { font: inherit; }
   transition: border-color .2s ease, background .2s ease, color .2s ease;
 }
 
-.theme-toggle:hover {
+.language-toggle {
+  width: auto;
+  min-width: 48px;
+  padding: 0 12px;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.theme-toggle:hover,
+.language-toggle:hover {
   border-color: var(--bright-blue);
   background: color-mix(in srgb, var(--blue) 14%, var(--panel));
 }
@@ -324,7 +340,7 @@ h2 {
   border-top: 1px solid var(--line);
 }
 .package span, .package small { display: block; color: var(--muted); }
-.package b { color: var(--green); }
+.package b { color: var(--success); }
 
 .booking {
   background:
@@ -510,7 +526,7 @@ cite span { color: var(--gold); }
   background: color-mix(in srgb, var(--blue) 16%, transparent);
   color: var(--gold);
 }
-.status.confirmed, .status.completed { background: rgba(124,184,137,.16); color: var(--green); }
+.status.confirmed, .status.completed { background: color-mix(in srgb, var(--blue) 16%, transparent); color: var(--success); }
 .status.rejected, .status.cancelled, .error { color: var(--rose); }
 
 .stats { grid-template-columns: repeat(5, minmax(0, 1fr)); margin-bottom: 18px; }
@@ -663,7 +679,7 @@ cite span { color: var(--gold); }
 
 @media (max-width: 640px) {
   .topbar { align-items: flex-start; gap: 10px; flex-direction: column; }
-  .theme-toggle { position: absolute; right: 16px; top: 14px; }
+  .topbar-controls { position: absolute; right: 16px; top: 14px; }
   nav { width: 100%; overflow-x: auto; }
   .hero { min-height: 92vh; padding-top: 132px; }
   .actions .btn { width: 100%; }

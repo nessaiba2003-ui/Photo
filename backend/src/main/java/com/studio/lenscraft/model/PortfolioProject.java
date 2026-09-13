@@ -19,8 +19,13 @@ public class PortfolioProject {
   @Column(nullable = false)
   private String title;
 
+  private String titleFr;
+
   @Column(nullable = false, length = 1800)
   private String description;
+
+  @Column(length = 1800)
+  private String descriptionFr;
 
   private LocalDate projectDate;
   private String location;

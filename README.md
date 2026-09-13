@@ -62,7 +62,7 @@ The Spring Boot backend and PostgreSQL database should be deployed separately on
 
 Seeded from environment variables:
 
-- Email: `admin@orionpolaris.local`
+- Email: `hamzaelbahi.orion@gmail.com`
 - Password: `ChangeMe123!`
 
 Change these before deploying.

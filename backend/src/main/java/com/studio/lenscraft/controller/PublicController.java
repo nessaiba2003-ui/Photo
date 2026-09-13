@@ -23,8 +23,14 @@ public class PublicController {
   Map<String, Object> site() {
     return Map.of(
         "brand", "ALBATROS",
+        "founder", "Hamza Elbahi",
         "role", "Photographer - Videographer - Video Editor",
         "tagline", "Rabat-based cinematic stories for weddings, brands, artists, and unforgettable nights.",
+        "email", "hamzaelbahi.orion@gmail.com",
+        "phone", "+212 772 604 428",
+        "instagram", "https://www.instagram.com/orion.polaris",
+        "whatsapp", "https://wa.me/212772604428",
+        "location", "Rabat, Morocco",
         "services", services.findByActiveTrueOrderByNameAsc(),
         "featuredProjects", projects.findByFeaturedTrueOrderByProjectDateDesc(),
         "testimonials", testimonials.findByFeaturedTrue());

@@ -20,8 +20,13 @@ public class PhotographyService {
   @Column(nullable = false)
   private String name;
 
+  private String nameFr;
+
   @Column(nullable = false, length = 1200)
   private String description;
+
+  @Column(length = 1200)
+  private String descriptionFr;
 
   @Column(nullable = false)
   private boolean active = true;

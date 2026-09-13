@@ -21,11 +21,18 @@ public class ServicePackage {
   @Column(nullable = false)
   private String name;
 
+  private String nameFr;
+
   @Column(nullable = false, length = 1600)
   private String includes;
 
+  @Column(length = 1600)
+  private String includesFr;
+
   @Column(nullable = false)
   private String duration;
+
+  private String durationFr;
 
   @Column(nullable = false)
   private Integer editedAssets;

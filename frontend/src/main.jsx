@@ -343,6 +343,11 @@ function api(path, options = {}) {
       throw new Error(error.message || 'Request failed');
     }
     return response.status === 204 ? null : response.json();
+  }).catch((error) => {
+    if (error instanceof TypeError) {
+      throw new Error('Backend unavailable. Start the secure API and try again.');
+    }
+    throw error;
   });
 }
 

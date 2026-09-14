@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Calendar, Check, Clock, Instagram, Lock, Mail, MapPin, MessageCircle, Moon, Pencil, Phone, Play, Plus, Save, Sparkles, Sun, Trash2, Video, WifiOff } from 'lucide-react';
+import { Calendar, Check, Clock, Image, Instagram, Lock, Mail, MapPin, MessageCircle, Moon, Pencil, Phone, Play, Plus, Save, Sparkles, Sun, Trash2, Upload, Video, WifiOff } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import './styles/app.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const API_ORIGIN = API_URL.replace(/\/api\/?$/, '');
 const INSTAGRAM_URL = 'https://www.instagram.com/orion.polaris';
 const WHATSAPP_URL = 'https://wa.me/212772604428';
 const PHONE_DISPLAY = '+212 772 604 428';
@@ -37,6 +38,12 @@ const categoryLabels = {
 };
 const formatPrice = (price) => `${Number(price).toLocaleString('fr-MA')} DH`;
 const pick = (item, field, lang) => (lang === 'fr' && item?.[`${field}Fr`]) ? item[`${field}Fr`] : item?.[field];
+const mediaUrl = (url) => {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith('/uploads/')) return `${API_ORIGIN}${url}`;
+  return url;
+};
 
 const copy = {
   en: {
@@ -134,8 +141,16 @@ const copy = {
       delete: 'Delete',
       cancel: 'Cancel',
       save: 'Save',
+      saveFailed: 'Save failed. Check the fields and backend connection, then try again.',
       nothing: 'Nothing here yet.',
       editSettings: 'Edit Settings',
+      mediaStudio: 'Media Publishing',
+      mediaStudioBody: 'Upload photos or videos here, choose their exact project and category, then save. Published items feed the ALBATROS website and the shared H-portfolio data.',
+      uploadCover: 'Upload Cover',
+      addMedia: 'Add Photo / Video',
+      mediaAlt: 'Caption / alt text',
+      coverReady: 'Cover uploaded. Save the project to publish it.',
+      mediaReady: 'Media added. Save the project to publish it.',
       localDraft: 'local draft',
       authSettings: 'Authentication Settings',
       currentPassword: 'Current password',
@@ -242,8 +257,16 @@ const copy = {
       delete: 'Supprimer',
       cancel: 'Annuler',
       save: 'Enregistrer',
+      saveFailed: 'Enregistrement impossible. Verifiez les champs et la connexion backend, puis reessayez.',
       nothing: 'Rien ici pour le moment.',
       editSettings: 'Modifier les reglages',
+      mediaStudio: 'Publication media',
+      mediaStudioBody: 'Ajoutez les photos ou videos ici, choisissez le bon projet et la bonne categorie, puis enregistrez. Les medias publies alimentent le site ALBATROS et les donnees partagees du H-portfolio.',
+      uploadCover: 'Ajouter la couverture',
+      addMedia: 'Ajouter photo / video',
+      mediaAlt: 'Legende / texte alternatif',
+      coverReady: 'Couverture ajoutee. Enregistrez le projet pour la publier.',
+      mediaReady: 'Media ajoute. Enregistrez le projet pour le publier.',
       localDraft: 'brouillon local',
       authSettings: 'Reglages d authentification',
       currentPassword: 'Mot de passe actuel',
@@ -306,9 +329,10 @@ function localAdminData() {
 
 function api(path, options = {}) {
   const token = localStorage.getItem('lenscraft_token');
+  const isFormData = options.body instanceof FormData;
   return fetch(`${API_URL}${path}`, {
     headers: {
-      'Content-Type': 'application/json',
+      ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers
     },
@@ -474,7 +498,7 @@ function PublicSite({ site, lang, t }) {
 function ProjectCard({ project, lang }) {
   return (
     <motion.article className="project-card" whileHover={{ y: -8 }}>
-      <img src={project.coverImageUrl} alt={`${pick(project, 'title', lang)} cover`} loading="lazy" />
+      <img src={mediaUrl(project.coverImageUrl)} alt={`${pick(project, 'title', lang)} cover`} loading="lazy" />
       <div>
         <span>{categoryLabels[lang][project.category] || project.category}</span>
         <h3>{pick(project, 'title', lang)}</h3>
@@ -570,6 +594,8 @@ function AdminDashboard({ t, lang }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [editing, setEditing] = useState(null);
   const [draft, setDraft] = useState({});
+  const [uploadingField, setUploadingField] = useState('');
+  const [mediaAltText, setMediaAltText] = useState('');
   const [passwordDraft, setPasswordDraft] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [passwordMessage, setPasswordMessage] = useState('');
   const [data, setData] = useState(() => localAdminData());
@@ -624,7 +650,7 @@ function AdminDashboard({ t, lang }) {
   function startCreate(type) {
     const defaults = {
       services: { name: '', description: '', active: true, packages: [] },
-      projects: { title: '', category: 'Photography', description: '', location: 'Rabat', projectDate: '2026', coverImageUrl: '/assets/albatros-opening.jpeg', featured: true },
+      projects: { title: '', category: 'Photography', description: '', location: 'Rabat', projectDate: new Date().toISOString().slice(0, 10), coverImageUrl: '/assets/albatros-opening.jpeg', featured: true, media: [] },
       testimonials: { clientName: '', review: '', projectOrService: '', photoUrl: '', featured: true },
       availability: { date: '', startTime: '', endTime: '', reason: '', blocked: true },
       settings: data.settings
@@ -647,9 +673,13 @@ function AdminDashboard({ t, lang }) {
 
     if (mode === 'api') {
       const endpoints = { services: '/admin/services', projects: '/admin/portfolio', testimonials: '/admin/testimonials', availability: '/admin/availability' };
-      await api(endpoints[type], { method: 'POST', body: JSON.stringify(draft) });
-      setEditing(null);
-      refresh();
+      try {
+        await api(endpoints[type], { method: 'POST', body: JSON.stringify(type === 'projects' ? normalizeProjectDraft(draft) : draft) });
+        setEditing(null);
+        refresh();
+      } catch (err) {
+        setError(err.message || t.admin.saveFailed);
+      }
       return;
     }
 
@@ -658,6 +688,47 @@ function AdminDashboard({ t, lang }) {
     const next = draft.id ? collection.map((existing) => existing.id === draft.id ? item : existing) : [item, ...collection];
     saveLocal(type, next);
     setEditing(null);
+  }
+
+  function normalizeProjectDraft(project) {
+    const media = (project.media || []).map((item, index) => ({
+      ...(item.id ? { id: item.id } : {}),
+      type: item.type,
+      url: item.url,
+      altText: item.altText || '',
+      sortOrder: item.sortOrder ?? index
+    }));
+    const projectDate = /^\d{4}$/.test(String(project.projectDate || ''))
+      ? `${project.projectDate}-01-01`
+      : project.projectDate || new Date().toISOString().slice(0, 10);
+    return { ...project, projectDate, media };
+  }
+
+  async function uploadProjectFile(file, target) {
+    if (!file) return;
+    setError('');
+    setUploadingField(target);
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const result = await api('/admin/files', { method: 'POST', body: formData });
+      if (target === 'cover') {
+        setDraft((current) => ({ ...current, coverImageUrl: result.url }));
+        setError(t.admin.coverReady);
+      } else {
+        const type = file.type?.startsWith('video/') ? 'VIDEO' : 'IMAGE';
+        setDraft((current) => ({
+          ...current,
+          media: [...(current.media || []), { type, url: result.url, altText: mediaAltText || current.title || 'ALBATROS project media', sortOrder: current.media?.length || 0 }]
+        }));
+        setMediaAltText('');
+        setError(t.admin.mediaReady);
+      }
+    } catch (err) {
+      setError(err.message || t.admin.unavailable);
+    } finally {
+      setUploadingField('');
+    }
   }
 
   async function deleteItem(type, id) {
@@ -753,7 +824,7 @@ function AdminDashboard({ t, lang }) {
         </form>
       </AdminBlock>}
 
-      {editing && <EditorModal type={editing.type} draft={draft} setDraft={setDraft} onClose={() => setEditing(null)} onSave={() => saveDraft(editing.type)} t={t} lang={lang} />}
+      {editing && <EditorModal type={editing.type} draft={draft} setDraft={setDraft} onClose={() => setEditing(null)} onSave={() => saveDraft(editing.type)} onUpload={uploadProjectFile} uploadingField={uploadingField} mediaAltText={mediaAltText} setMediaAltText={setMediaAltText} t={t} lang={lang} />}
     </main>
   );
 }
@@ -768,7 +839,7 @@ function EditableCollection({ title, type, items, onCreate, onEdit, onDelete, re
   );
 }
 
-function EditorModal({ type, draft, setDraft, onClose, onSave, t, lang }) {
+function EditorModal({ type, draft, setDraft, onClose, onSave, onUpload, uploadingField, mediaAltText, setMediaAltText, t, lang }) {
   const fieldsByType = {
     services: ['name', 'nameFr', 'description', 'descriptionFr'],
     projects: ['title', 'titleFr', 'category', 'description', 'descriptionFr', 'location', 'projectDate', 'coverImageUrl'],
@@ -788,10 +859,56 @@ function EditorModal({ type, draft, setDraft, onClose, onSave, t, lang }) {
                 ? <textarea value={draft[field] || ''} onChange={(e) => setDraft({ ...draft, [field]: e.target.value })} />
                 : field === 'category'
                   ? <select value={draft[field] || 'Photography'} onChange={(e) => setDraft({ ...draft, [field]: e.target.value })}>{categories.filter((c) => c !== 'All').map((category) => <option key={category} value={category}>{categoryLabels[lang][category]}</option>)}</select>
-                  : <input value={draft[field] || ''} onChange={(e) => setDraft({ ...draft, [field]: e.target.value })} />}
+                  : <input type={field === 'projectDate' ? 'date' : 'text'} value={draft[field] || ''} onChange={(e) => setDraft({ ...draft, [field]: e.target.value })} />}
             </label>
           ))}
         </div>
+        {type === 'projects' && (
+          <div className="media-publisher">
+            <div className="media-publisher-copy">
+              <Image size={18} />
+              <div>
+                <h4>{t.admin.mediaStudio}</h4>
+                <p>{t.admin.mediaStudioBody}</p>
+              </div>
+            </div>
+            {draft.coverImageUrl && (
+              <figure className="cover-preview">
+                <img src={mediaUrl(draft.coverImageUrl)} alt={draft.title || 'ALBATROS cover preview'} />
+                <figcaption>{draft.coverImageUrl}</figcaption>
+              </figure>
+            )}
+            <div className="upload-row">
+              <label className="upload-button">
+                <Upload size={17} />
+                <span>{uploadingField === 'cover' ? '...' : t.admin.uploadCover}</span>
+                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => onUpload(e.target.files?.[0], 'cover')} />
+              </label>
+              <label className="field media-alt">
+                <span>{t.admin.mediaAlt}</span>
+                <input value={mediaAltText} onChange={(e) => setMediaAltText(e.target.value)} />
+              </label>
+              <label className="upload-button">
+                <Plus size={17} />
+                <span>{uploadingField === 'media' ? '...' : t.admin.addMedia}</span>
+                <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime" onChange={(e) => onUpload(e.target.files?.[0], 'media')} />
+              </label>
+            </div>
+            {(draft.media || []).length > 0 && (
+              <div className="media-list">
+                {draft.media.map((item, index) => (
+                  <div className="media-item" key={`${item.url}-${index}`}>
+                    {item.type === 'VIDEO'
+                      ? <video src={mediaUrl(item.url)} muted playsInline controls />
+                      : <img src={mediaUrl(item.url)} alt={item.altText || draft.title || 'ALBATROS media'} />}
+                    <span>{item.altText || item.url}</span>
+                    <button type="button" onClick={() => setDraft({ ...draft, media: draft.media.filter((_, i) => i !== index) })}><Trash2 size={14} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <div className="actions"><button className="btn ghost" onClick={onClose}>{t.admin.cancel}</button><button className="btn primary" onClick={onSave}><Save size={17} /> {t.admin.save}</button></div>
       </div>
     </div>

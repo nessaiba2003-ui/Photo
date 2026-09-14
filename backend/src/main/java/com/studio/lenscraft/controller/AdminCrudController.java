@@ -77,7 +77,12 @@ public class AdminCrudController {
   List<PortfolioProject> portfolio() { return projects.findAll(); }
 
   @PostMapping("/portfolio")
-  PortfolioProject saveProject(@RequestBody PortfolioProject project) { return projects.save(project); }
+  PortfolioProject saveProject(@RequestBody PortfolioProject project) {
+    if (project.getMedia() != null) {
+      project.getMedia().forEach(media -> media.setProject(project));
+    }
+    return projects.save(project);
+  }
 
   @DeleteMapping("/portfolio/{id}")
   void deleteProject(@PathVariable Long id) { projects.deleteById(id); }

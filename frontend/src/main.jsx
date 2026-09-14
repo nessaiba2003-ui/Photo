@@ -116,8 +116,8 @@ const copy = {
       loginTitle: 'Admin Login',
       help: 'If the backend is online, this signs into the secure dashboard. If it is offline, it opens local draft mode for editing site content before deployment.',
       signIn: 'Sign In',
-      offline: 'Backend offline. Opened local draft mode so you can edit content now.',
-      unavailable: 'Backend unavailable. You are editing local drafts.',
+      offline: 'Backend offline. Start the secure API before signing in.',
+      unavailable: 'Backend unavailable. Start the secure API and try again.',
       eyebrow: 'Admin Dashboard',
       title: 'Studio Operations',
       localMode: 'Local draft mode',
@@ -136,7 +136,15 @@ const copy = {
       save: 'Save',
       nothing: 'Nothing here yet.',
       editSettings: 'Edit Settings',
-      localDraft: 'local draft'
+      localDraft: 'local draft',
+      authSettings: 'Authentication Settings',
+      currentPassword: 'Current password',
+      newPassword: 'New password',
+      confirmPassword: 'Confirm new password',
+      changePassword: 'Change Password',
+      passwordMismatch: 'New passwords do not match.',
+      passwordChanged: 'Password changed successfully.',
+      passwordBackendOnly: 'Password changes require the secure backend. Start the API and sign in again.'
     }
   },
   fr: {
@@ -216,8 +224,8 @@ const copy = {
       loginTitle: 'Connexion admin',
       help: 'Si le backend est en ligne, la connexion ouvre le dashboard securise. S il est hors ligne, un mode brouillon local permet de modifier le contenu avant le deploiement.',
       signIn: 'Se connecter',
-      offline: 'Backend hors ligne. Le mode brouillon local est ouvert pour modifier le contenu maintenant.',
-      unavailable: 'Backend indisponible. Vous modifiez les brouillons locaux.',
+      offline: 'Backend hors ligne. Lancez l API securisee avant de vous connecter.',
+      unavailable: 'Backend indisponible. Lancez l API securisee puis reessayez.',
       eyebrow: 'Dashboard admin',
       title: 'Operations du studio',
       localMode: 'Mode brouillon local',
@@ -236,7 +244,15 @@ const copy = {
       save: 'Enregistrer',
       nothing: 'Rien ici pour le moment.',
       editSettings: 'Modifier les reglages',
-      localDraft: 'brouillon local'
+      localDraft: 'brouillon local',
+      authSettings: 'Reglages d authentification',
+      currentPassword: 'Mot de passe actuel',
+      newPassword: 'Nouveau mot de passe',
+      confirmPassword: 'Confirmer le nouveau mot de passe',
+      changePassword: 'Changer le mot de passe',
+      passwordMismatch: 'Les nouveaux mots de passe ne correspondent pas.',
+      passwordChanged: 'Mot de passe modifie avec succes.',
+      passwordBackendOnly: 'Le changement de mot de passe exige le backend securise. Lancez l API et reconnectez-vous.'
     }
   }
 };
@@ -548,12 +564,14 @@ function ClientPortal({ t }) {
 }
 
 function AdminDashboard({ t, lang }) {
-  const [token, setToken] = useState(localStorage.getItem('lenscraft_token'));
-  const [login, setLogin] = useState({ email: EMAIL, password: 'ChangeMe123!' });
-  const [mode, setMode] = useState(localStorage.getItem('albatros_admin_mode') || 'api');
+  const [token, setToken] = useState(() => localStorage.getItem('lenscraft_token'));
+  const [login, setLogin] = useState({ email: EMAIL, password: '' });
+  const [mode, setMode] = useState('api');
   const [activeTab, setActiveTab] = useState('overview');
   const [editing, setEditing] = useState(null);
   const [draft, setDraft] = useState({});
+  const [passwordDraft, setPasswordDraft] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [passwordMessage, setPasswordMessage] = useState('');
   const [data, setData] = useState(() => localAdminData());
   const [error, setError] = useState('');
 
@@ -569,29 +587,20 @@ function AdminDashboard({ t, lang }) {
       setToken(result.token);
       setError('');
     } catch (err) {
-      localStorage.setItem('lenscraft_token', 'local-draft-admin');
-      localStorage.setItem('albatros_admin_mode', 'local');
-      setMode('local');
-      setToken('local-draft-admin');
-      setData(localAdminData());
-      setError(t.admin.offline);
+      localStorage.removeItem('lenscraft_token');
+      localStorage.removeItem('albatros_admin_mode');
+      setToken(null);
+      setError(err.message || t.admin.unavailable);
     }
   }
 
   async function refresh() {
-    if (mode === 'local' || token === 'local-draft-admin') {
-      setData(localAdminData());
-      return;
-    }
     try {
       const paths = ['/admin/overview', '/admin/bookings', '/admin/services', '/admin/portfolio', '/admin/clients', '/admin/testimonials', '/admin/availability'];
       const [overview, bookings, services, projects, clients, testimonials, availability] = await Promise.all(paths.map((p) => api(p)));
       setData({ overview, bookings, services, projects, clients, testimonials, availability, settings: readLocal('settings', settingsDefaults) });
       setError('');
     } catch (err) {
-      localStorage.setItem('albatros_admin_mode', 'local');
-      setMode('local');
-      setData(localAdminData());
       setError(t.admin.unavailable);
     }
   }
@@ -663,9 +672,37 @@ function AdminDashboard({ t, lang }) {
 
   function logout() {
     localStorage.removeItem('lenscraft_token');
+    localStorage.removeItem('albatros_admin_mode');
     setToken(null);
     setMode('api');
     setEditing(null);
+  }
+
+  async function changePassword(e) {
+    e.preventDefault();
+    setPasswordMessage('');
+    setError('');
+    if (passwordDraft.newPassword !== passwordDraft.confirmPassword) {
+      setError(t.admin.passwordMismatch);
+      return;
+    }
+    if (mode !== 'api') {
+      setError(t.admin.passwordBackendOnly);
+      return;
+    }
+    try {
+      await api('/admin/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({
+          currentPassword: passwordDraft.currentPassword,
+          newPassword: passwordDraft.newPassword
+        })
+      });
+      setPasswordDraft({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPasswordMessage(t.admin.passwordChanged);
+    } catch (err) {
+      setError(err.message || t.admin.unavailable);
+    }
   }
 
   if (!token) {
@@ -703,7 +740,18 @@ function AdminDashboard({ t, lang }) {
       {activeTab === 'portfolio' && <EditableCollection title="Portfolio Posts" type="projects" items={data.projects} onCreate={startCreate} onEdit={startEdit} onDelete={deleteItem} renderMeta={(item) => `${categoryLabels[lang][item.category] || item.category} - ${item.location}`} t={t} lang={lang} />}
       {activeTab === 'testimonials' && <EditableCollection title={t.admin.tabs.testimonials} type="testimonials" items={data.testimonials} onCreate={startCreate} onEdit={startEdit} onDelete={deleteItem} renderMeta={(item) => item.projectOrService} t={t} lang={lang} />}
       {activeTab === 'availability' && <EditableCollection title={t.admin.tabs.availability} type="availability" items={data.availability} onCreate={startCreate} onEdit={startEdit} onDelete={deleteItem} renderMeta={(item) => `${item.startTime || 'Full day'} - ${item.endTime || 'blocked'}`} t={t} lang={lang} />}
-      {activeTab === 'settings' && <AdminBlock title={t.admin.tabs.settings}><button className="btn primary admin-add" onClick={() => startEdit('settings', data.settings)}><Pencil size={17} /> {t.admin.editSettings}</button><div className="settings-list">{Object.entries(data.settings).map(([key, value]) => <p key={key}><strong>{key}</strong><span>{String(value)}</span></p>)}</div></AdminBlock>}
+      {activeTab === 'settings' && <AdminBlock title={t.admin.tabs.settings}>
+        <button className="btn primary admin-add" onClick={() => startEdit('settings', data.settings)}><Pencil size={17} /> {t.admin.editSettings}</button>
+        <div className="settings-list">{Object.entries(data.settings).map(([key, value]) => <p key={key}><strong>{key}</strong><span>{String(value)}</span></p>)}</div>
+        <form className="password-panel" onSubmit={changePassword}>
+          <h4>{t.admin.authSettings}</h4>
+          <label className="field"><span>{t.admin.currentPassword}</span><input type="password" autoComplete="current-password" value={passwordDraft.currentPassword} onChange={(e) => setPasswordDraft({ ...passwordDraft, currentPassword: e.target.value })} required /></label>
+          <label className="field"><span>{t.admin.newPassword}</span><input type="password" autoComplete="new-password" minLength="12" value={passwordDraft.newPassword} onChange={(e) => setPasswordDraft({ ...passwordDraft, newPassword: e.target.value })} required /></label>
+          <label className="field"><span>{t.admin.confirmPassword}</span><input type="password" autoComplete="new-password" minLength="12" value={passwordDraft.confirmPassword} onChange={(e) => setPasswordDraft({ ...passwordDraft, confirmPassword: e.target.value })} required /></label>
+          <button className="btn primary" type="submit"><Lock size={17} /> {t.admin.changePassword}</button>
+          {passwordMessage && <p className="success">{passwordMessage}</p>}
+        </form>
+      </AdminBlock>}
 
       {editing && <EditorModal type={editing.type} draft={draft} setDraft={setDraft} onClose={() => setEditing(null)} onSave={() => saveDraft(editing.type)} t={t} lang={lang} />}
     </main>

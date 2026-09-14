@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/lenscraft}
-    username: ${DATABASE_USERNAME:lenscraft}
-    password: ${DATABASE_PASSWORD:lenscraft}
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: update
@@ -19,6 +19,6 @@ spring:
       max-request-size: 200MB
 
 app:
-  jwt-secret: ${JWT_SECRET:change-this-development-secret-change-this}
+  jwt-secret: ${JWT_SECRET}
   jwt-expiration-hours: ${JWT_EXPIRATION_HOURS:12}
   cors-origins: ${CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}

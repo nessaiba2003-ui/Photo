@@ -2,9 +2,14 @@ package com.studio.lenscraft.controller;
 
 import com.studio.lenscraft.model.*;
 import com.studio.lenscraft.repository.*;
+import com.studio.lenscraft.dto.AuthDtos.ChangePasswordRequest;
+import com.studio.lenscraft.dto.AuthDtos.ChangePasswordResponse;
+import com.studio.lenscraft.service.AuthService;
+import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,8 +22,9 @@ public class AdminCrudController {
   private final TestimonialRepository testimonials;
   private final ClientRepository clients;
   private final BookingRepository bookings;
+  private final AuthService authService;
 
-  public AdminCrudController(PhotographyServiceRepository services, ServicePackageRepository packages, PortfolioProjectRepository projects, AvailabilityRepository availability, TestimonialRepository testimonials, ClientRepository clients, BookingRepository bookings) {
+  public AdminCrudController(PhotographyServiceRepository services, ServicePackageRepository packages, PortfolioProjectRepository projects, AvailabilityRepository availability, TestimonialRepository testimonials, ClientRepository clients, BookingRepository bookings, AuthService authService) {
     this.services = services;
     this.packages = packages;
     this.projects = projects;
@@ -26,6 +32,7 @@ public class AdminCrudController {
     this.testimonials = testimonials;
     this.clients = clients;
     this.bookings = bookings;
+    this.authService = authService;
   }
 
   @GetMapping("/overview")
@@ -44,6 +51,11 @@ public class AdminCrudController {
 
   @GetMapping("/services")
   List<PhotographyService> services() { return services.findAll(); }
+
+  @PostMapping("/auth/change-password")
+  ChangePasswordResponse changePassword(@Valid @RequestBody ChangePasswordRequest request, Authentication authentication) {
+    return authService.changePassword(authentication.getName(), request.currentPassword(), request.newPassword());
+  }
 
   @PostMapping("/services")
   PhotographyService saveService(@RequestBody PhotographyService service) { return services.save(service); }

@@ -3,8 +3,8 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: lenscraft
-      POSTGRES_USER: lenscraft
-      POSTGRES_PASSWORD: lenscraft
+      POSTGRES_USER: ${DATABASE_USERNAME:?Set DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -19,11 +19,11 @@ services:
     build: ./backend
     environment:
       DATABASE_URL: jdbc:postgresql://postgres:5432/lenscraft
-      DATABASE_USERNAME: lenscraft
-      DATABASE_PASSWORD: lenscraft
-      JWT_SECRET: change-this-development-secret-change-this
+      DATABASE_USERNAME: ${DATABASE_USERNAME:?Set DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
       ADMIN_EMAIL: hamzaelbahi.orion@gmail.com
-      ADMIN_PASSWORD: ChangeMe123!
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:?Set ADMIN_BOOTSTRAP_PASSWORD as a server-side secret before first startup}
       CORS_ORIGINS: http://localhost:5173,http://localhost:8081
     ports:
       - "8080:8080"

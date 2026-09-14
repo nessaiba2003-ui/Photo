@@ -55,17 +55,26 @@ Recommended Vercel settings:
 - Build Command: `npm --prefix frontend install && npm --prefix frontend run build`
 - Output Directory: `frontend/dist`
 - Environment Variable: `VITE_API_URL=https://your-api-domain.com/api`
+- Do not add `ADMIN_BOOTSTRAP_PASSWORD`, `JWT_SECRET`, or database credentials to frontend/Vite/Vercel public variables.
 
 The Spring Boot backend and PostgreSQL database should be deployed separately on a backend host such as Render, Railway, Fly.io, a VPS, or Docker on a production server.
+
+Backend production secrets:
+
+- `ADMIN_EMAIL=hamzaelbahi.orion@gmail.com`
+- `ADMIN_BOOTSTRAP_PASSWORD` set as a server-side secret only
+- `JWT_SECRET` set as a long random server-side secret
+- `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD` set only on the backend host
+- `CORS_ORIGINS` should include the ALBATROS frontend URL and `https://h-portfolio-sepia.vercel.app` when the portfolio consumes the shared API.
 
 ## Default Admin
 
 Seeded from environment variables:
 
 - Email: `hamzaelbahi.orion@gmail.com`
-- Password: `ChangeMe123!`
+- Password: set only as the server-side `ADMIN_BOOTSTRAP_PASSWORD` secret before the first backend startup.
 
-Change these before deploying.
+The bootstrap password is hashed with BCrypt when the first admin is created. Do not commit it, expose it through frontend variables, or display it in the Admin UI. After the first login, change it from Admin -> Settings.
 
 ## Environment Variables
 
@@ -77,7 +86,7 @@ Copy `.env.example` and set production values:
 - `JWT_SECRET`
 - `JWT_EXPIRATION_HOURS`
 - `ADMIN_EMAIL`
-- `ADMIN_PASSWORD`
+- `ADMIN_BOOTSTRAP_PASSWORD`
 - `CORS_ORIGINS`
 - `VITE_API_URL`
 - `UPLOAD_DIR`
@@ -104,12 +113,13 @@ Spring Boot creates and updates the schema automatically in development. For pro
 
 1. Provision PostgreSQL and set strong database credentials.
 2. Set a long random `JWT_SECRET`.
-3. Set `CORS_ORIGINS` to the production frontend origin.
-4. Build the backend container and frontend container.
-5. Serve the frontend behind HTTPS.
-6. Put the API behind HTTPS and a reverse proxy.
-7. Replace seeded admin credentials immediately.
-8. Add object storage for uploaded portfolio and client gallery files.
+3. Set `ADMIN_BOOTSTRAP_PASSWORD` as a server-side production secret before the first backend startup.
+4. Set `CORS_ORIGINS` to the production frontend origin.
+5. Build the backend container and frontend container.
+6. Serve the frontend behind HTTPS.
+7. Put the API behind HTTPS and a reverse proxy.
+8. Change the bootstrap admin password from Admin -> Settings after first login.
+9. Add object storage for uploaded portfolio and client gallery files.
 
 ## Implemented Features
 
@@ -119,6 +129,8 @@ Spring Boot creates and updates the schema automatically in development. For pro
 - Availability and double-booking protection for pending/confirmed sessions
 - Client booking lookup page
 - Admin login and dashboard overview
+- Authenticated Admin Settings password-change form backed by `/api/admin/auth/change-password`
 - Admin booking status management
 - Admin endpoints for services, packages, portfolio, availability, clients, and testimonials
 - Admin media upload endpoint for JPEG, PNG, WebP, MP4, and MOV files
+- Public portfolio API available at `/api/public/portfolio` for a shared ALBATROS/portfolio data source

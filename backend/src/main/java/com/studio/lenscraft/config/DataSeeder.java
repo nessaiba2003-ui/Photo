@@ -4,6 +4,7 @@ import com.studio.lenscraft.model.*;
 import com.studio.lenscraft.repository.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import org.springframework.util.StringUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -13,12 +14,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 public class DataSeeder {
   @Bean
-  CommandLineRunner seed(AdminUserRepository admins, PhotographyServiceRepository services, PortfolioProjectRepository projects, TestimonialRepository testimonials, PasswordEncoder encoder, @Value("${ADMIN_EMAIL:hamzaelbahi.orion@gmail.com}") String email, @Value("${ADMIN_PASSWORD:ChangeMe123!}") String password) {
+  CommandLineRunner seed(AdminUserRepository admins, PhotographyServiceRepository services, PortfolioProjectRepository projects, TestimonialRepository testimonials, PasswordEncoder encoder, @Value("${ADMIN_EMAIL:hamzaelbahi.orion@gmail.com}") String email, @Value("${ADMIN_BOOTSTRAP_PASSWORD:}") String bootstrapPassword) {
     return args -> {
       if (admins.count() == 0) {
+        if (!StringUtils.hasText(bootstrapPassword)) {
+          throw new IllegalStateException("ADMIN_BOOTSTRAP_PASSWORD must be configured as a server-side secret before the first admin account can be created.");
+        }
         AdminUser admin = new AdminUser();
         admin.setEmail(email);
-        admin.setPasswordHash(encoder.encode(password));
+        admin.setPasswordHash(encoder.encode(bootstrapPassword));
         admins.save(admin);
       }
       if (services.count() == 0) {

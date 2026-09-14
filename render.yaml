@@ -1,0 +1,37 @@
+databases:
+  - name: albatros-postgres
+    databaseName: albatros
+    user: albatros
+
+services:
+  - type: web
+    name: albatros-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/public/site
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: albatros-postgres
+          property: connectionString
+      - key: DATABASE_USERNAME
+        fromDatabase:
+          name: albatros-postgres
+          property: user
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: albatros-postgres
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION_HOURS
+        value: "12"
+      - key: ADMIN_EMAIL
+        value: hamzaelbahi.orion@gmail.com
+      - key: ADMIN_BOOTSTRAP_PASSWORD
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: UPLOAD_DIR
+        value: /tmp/albatros-uploads

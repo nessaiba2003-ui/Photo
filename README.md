@@ -59,6 +59,15 @@ Recommended Vercel settings:
 
 The Spring Boot backend and PostgreSQL database should be deployed separately on a backend host such as Render, Railway, Fly.io, a VPS, or Docker on a production server.
 
+## Render Backend Deployment
+
+The included `render.yaml` provisions the Spring backend and a managed PostgreSQL database. In Render, create a new Blueprint from this repository, then enter these two values when requested:
+
+- `ADMIN_BOOTSTRAP_PASSWORD`: the initial administrator password, entered only in Render's secret field.
+- `CORS_ORIGINS`: the exact Vercel production URL, for example `https://photo-five-delta.vercel.app`.
+
+After Render reports the API as live, copy its public URL and set Vercel's `VITE_API_URL` to `https://YOUR-RENDER-SERVICE.onrender.com/api`, then redeploy Vercel. Render's database URL is converted to Spring's JDBC format at startup; no database secret is committed to this repository.
+
 Backend production secrets:
 
 - `ADMIN_EMAIL=hamzaelbahi.orion@gmail.com`

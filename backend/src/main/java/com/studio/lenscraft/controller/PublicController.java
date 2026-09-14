@@ -12,25 +12,28 @@ public class PublicController {
   private final PhotographyServiceRepository services;
   private final PortfolioProjectRepository projects;
   private final TestimonialRepository testimonials;
+  private final SiteSettingsRepository settings;
 
-  public PublicController(PhotographyServiceRepository services, PortfolioProjectRepository projects, TestimonialRepository testimonials) {
+  public PublicController(PhotographyServiceRepository services, PortfolioProjectRepository projects, TestimonialRepository testimonials, SiteSettingsRepository settings) {
     this.services = services;
     this.projects = projects;
     this.testimonials = testimonials;
+    this.settings = settings;
   }
 
   @GetMapping("/site")
   Map<String, Object> site() {
+    SiteSettings siteSettings = settings.findById(1L).orElseGet(SiteSettings::defaults);
     return Map.ofEntries(
-        Map.entry("brand", "ALBATROS"),
-        Map.entry("founder", "Hamza Elbahi"),
-        Map.entry("role", "Photographer - Videographer - Video Editor"),
-        Map.entry("tagline", "Rabat-based cinematic stories for weddings, brands, artists, and unforgettable nights."),
-        Map.entry("email", "hamzaelbahi.orion@gmail.com"),
-        Map.entry("phone", "+212 772 604 428"),
-        Map.entry("instagram", "https://www.instagram.com/orion.polaris"),
-        Map.entry("whatsapp", "https://wa.me/212772604428"),
-        Map.entry("location", "Rabat, Morocco"),
+        Map.entry("brand", siteSettings.getBrand()),
+        Map.entry("founder", siteSettings.getFounder()),
+        Map.entry("role", siteSettings.getRole()),
+        Map.entry("tagline", siteSettings.getTagline()),
+        Map.entry("email", siteSettings.getEmail()),
+        Map.entry("phone", siteSettings.getPhone()),
+        Map.entry("instagram", siteSettings.getInstagram()),
+        Map.entry("whatsapp", siteSettings.getWhatsapp()),
+        Map.entry("location", siteSettings.getLocation()),
         Map.entry("services", services.findByActiveTrueOrderByNameAsc()),
         Map.entry("featuredProjects", projects.findByFeaturedTrueOrderByProjectDateDesc()),
         Map.entry("testimonials", testimonials.findByFeaturedTrue()));

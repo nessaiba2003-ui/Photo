@@ -292,6 +292,7 @@ const fallbackSite = {
 const settingsDefaults = {
   brand: 'ALBATROS',
   founder: 'Hamza Elbahi',
+  role: 'Photographer - Videographer - Video Editor',
   email: EMAIL,
   phone: PHONE_DISPLAY,
   instagram: INSTAGRAM_URL,
@@ -627,9 +628,9 @@ function AdminDashboard({ t, lang }) {
 
   async function refresh() {
     try {
-      const paths = ['/admin/overview', '/admin/bookings', '/admin/services', '/admin/portfolio', '/admin/clients', '/admin/testimonials', '/admin/availability'];
-      const [overview, bookings, services, projects, clients, testimonials, availability] = await Promise.all(paths.map((p) => api(p)));
-      setData({ overview, bookings, services, projects, clients, testimonials, availability, settings: readLocal('settings', settingsDefaults) });
+      const paths = ['/admin/overview', '/admin/bookings', '/admin/services', '/admin/portfolio', '/admin/clients', '/admin/testimonials', '/admin/availability', '/admin/settings'];
+      const [overview, bookings, services, projects, clients, testimonials, availability, settings] = await Promise.all(paths.map((p) => api(p)));
+      setData({ overview, bookings, services, projects, clients, testimonials, availability, settings });
       setError('');
     } catch (err) {
       setError(t.admin.unavailable);
@@ -671,6 +672,16 @@ function AdminDashboard({ t, lang }) {
 
   async function saveDraft(type) {
     if (type === 'settings') {
+      if (mode === 'api') {
+        try {
+          await api('/admin/settings', { method: 'POST', body: JSON.stringify(draft) });
+          setEditing(null);
+          refresh();
+        } catch (err) {
+          setError(err.message || t.admin.saveFailed);
+        }
+        return;
+      }
       saveLocal('settings', draft);
       setEditing(null);
       return;
@@ -850,7 +861,7 @@ function EditorModal({ type, draft, setDraft, onClose, onSave, onUpload, uploadi
     projects: ['title', 'titleFr', 'category', 'description', 'descriptionFr', 'location', 'projectDate', 'coverImageUrl'],
     testimonials: ['clientName', 'projectOrService', 'review', 'photoUrl'],
     availability: ['date', 'startTime', 'endTime', 'reason'],
-    settings: ['brand', 'founder', 'email', 'phone', 'instagram', 'whatsapp', 'location', 'tagline']
+    settings: ['brand', 'founder', 'role', 'email', 'phone', 'instagram', 'whatsapp', 'location', 'tagline']
   };
   return (
     <div className="modal-backdrop">

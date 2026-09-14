@@ -14,8 +14,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 public class DataSeeder {
   @Bean
-  CommandLineRunner seed(AdminUserRepository admins, PhotographyServiceRepository services, PortfolioProjectRepository projects, TestimonialRepository testimonials, PasswordEncoder encoder, @Value("${ADMIN_EMAIL:hamzaelbahi.orion@gmail.com}") String email, @Value("${ADMIN_BOOTSTRAP_PASSWORD:}") String bootstrapPassword) {
+  CommandLineRunner seed(AdminUserRepository admins, PhotographyServiceRepository services, PortfolioProjectRepository projects, TestimonialRepository testimonials, SiteSettingsRepository settings, PasswordEncoder encoder, @Value("${ADMIN_EMAIL:hamzaelbahi.orion@gmail.com}") String email, @Value("${ADMIN_BOOTSTRAP_PASSWORD:}") String bootstrapPassword) {
     return args -> {
+      if (!settings.existsById(1L)) {
+        settings.save(SiteSettings.defaults());
+      }
       if (admins.count() == 0) {
         if (!StringUtils.hasText(bootstrapPassword)) {
           throw new IllegalStateException("ADMIN_BOOTSTRAP_PASSWORD must be configured as a server-side secret before the first admin account can be created.");

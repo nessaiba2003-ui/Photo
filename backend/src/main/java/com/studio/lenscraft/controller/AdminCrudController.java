@@ -22,9 +22,10 @@ public class AdminCrudController {
   private final TestimonialRepository testimonials;
   private final ClientRepository clients;
   private final BookingRepository bookings;
+  private final SiteSettingsRepository settings;
   private final AuthService authService;
 
-  public AdminCrudController(PhotographyServiceRepository services, ServicePackageRepository packages, PortfolioProjectRepository projects, AvailabilityRepository availability, TestimonialRepository testimonials, ClientRepository clients, BookingRepository bookings, AuthService authService) {
+  public AdminCrudController(PhotographyServiceRepository services, ServicePackageRepository packages, PortfolioProjectRepository projects, AvailabilityRepository availability, TestimonialRepository testimonials, ClientRepository clients, BookingRepository bookings, SiteSettingsRepository settings, AuthService authService) {
     this.services = services;
     this.packages = packages;
     this.projects = projects;
@@ -32,6 +33,7 @@ public class AdminCrudController {
     this.testimonials = testimonials;
     this.clients = clients;
     this.bookings = bookings;
+    this.settings = settings;
     this.authService = authService;
   }
 
@@ -55,6 +57,27 @@ public class AdminCrudController {
   @PostMapping("/auth/change-password")
   ChangePasswordResponse changePassword(@Valid @RequestBody ChangePasswordRequest request, Authentication authentication) {
     return authService.changePassword(authentication.getName(), request.currentPassword(), request.newPassword());
+  }
+
+  @GetMapping("/settings")
+  SiteSettings settings() {
+    return settings.findById(1L).orElseGet(SiteSettings::defaults);
+  }
+
+  @PostMapping("/settings")
+  SiteSettings saveSettings(@RequestBody SiteSettings request) {
+    SiteSettings existing = settings.findById(1L).orElseGet(SiteSettings::defaults);
+    existing.setId(1L);
+    existing.setBrand(valueOr(existing.getBrand(), request.getBrand()));
+    existing.setFounder(valueOr(existing.getFounder(), request.getFounder()));
+    existing.setRole(valueOr(existing.getRole(), request.getRole()));
+    existing.setTagline(valueOr(existing.getTagline(), request.getTagline()));
+    existing.setEmail(valueOr(existing.getEmail(), request.getEmail()));
+    existing.setPhone(valueOr(existing.getPhone(), request.getPhone()));
+    existing.setInstagram(valueOr(existing.getInstagram(), request.getInstagram()));
+    existing.setWhatsapp(valueOr(existing.getWhatsapp(), request.getWhatsapp()));
+    existing.setLocation(valueOr(existing.getLocation(), request.getLocation()));
+    return settings.save(existing);
   }
 
   @PostMapping("/services")
@@ -107,4 +130,8 @@ public class AdminCrudController {
 
   @DeleteMapping("/testimonials/{id}")
   void deleteTestimonial(@PathVariable Long id) { testimonials.deleteById(id); }
+
+  private String valueOr(String fallback, String value) {
+    return value == null || value.isBlank() ? fallback : value;
+  }
 }

@@ -125,6 +125,8 @@ const copy = {
       signIn: 'Sign In',
       offline: 'Backend offline. Start the secure API before signing in.',
       unavailable: 'Backend unavailable. Start the secure API and try again.',
+      passwordRequired: 'Enter the admin password to sign in.',
+      sessionExpired: 'Your admin session has expired. Please sign in again.',
       eyebrow: 'Admin Dashboard',
       title: 'Studio Operations',
       localMode: 'Local draft mode',
@@ -241,6 +243,8 @@ const copy = {
       signIn: 'Se connecter',
       offline: 'Backend hors ligne. Lancez l API securisee avant de vous connecter.',
       unavailable: 'Backend indisponible. Lancez l API securisee puis reessayez.',
+      passwordRequired: 'Saisissez le mot de passe administrateur pour vous connecter.',
+      sessionExpired: 'Votre session administrateur a expire. Veuillez vous reconnecter.',
       eyebrow: 'Dashboard admin',
       title: 'Operations du studio',
       localMode: 'Mode brouillon local',
@@ -328,6 +332,13 @@ function localAdminData() {
   return { ...data, overview: makeOverview(data) };
 }
 
+class ApiError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.status = status;
+  }
+}
+
 function api(path, options = {}) {
   const token = localStorage.getItem('lenscraft_token');
   const isFormData = options.body instanceof FormData;
@@ -341,7 +352,7 @@ function api(path, options = {}) {
   }).then(async (response) => {
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new Error(error.message || 'Request failed');
+        throw new ApiError(error.message || 'Request failed', response.status);
     }
     return response.status === 204 ? null : response.json();
   }).catch((error) => {
@@ -611,6 +622,10 @@ function AdminDashboard({ t, lang }) {
 
   async function signIn(e) {
     e.preventDefault();
+    if (!login.password.trim()) {
+      setError(t.admin.passwordRequired);
+      return;
+    }
     try {
       const result = await api('/auth/login', { method: 'POST', body: JSON.stringify(login) });
       localStorage.setItem('lenscraft_token', result.token);
@@ -633,7 +648,14 @@ function AdminDashboard({ t, lang }) {
       setData({ overview, bookings, services, projects, clients, testimonials, availability, settings });
       setError('');
     } catch (err) {
-      setError(t.admin.unavailable);
+      if (err.status === 401 || err.status === 403) {
+        localStorage.removeItem('lenscraft_token');
+        localStorage.removeItem('albatros_admin_mode');
+        setToken(null);
+        setError(t.admin.sessionExpired);
+        return;
+      }
+      setError(err.message || t.admin.unavailable);
     }
   }
 

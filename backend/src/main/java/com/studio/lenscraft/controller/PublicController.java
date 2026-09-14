@@ -21,19 +21,19 @@ public class PublicController {
 
   @GetMapping("/site")
   Map<String, Object> site() {
-    return Map.of(
-        "brand", "ALBATROS",
-        "founder", "Hamza Elbahi",
-        "role", "Photographer - Videographer - Video Editor",
-        "tagline", "Rabat-based cinematic stories for weddings, brands, artists, and unforgettable nights.",
-        "email", "hamzaelbahi.orion@gmail.com",
-        "phone", "+212 772 604 428",
-        "instagram", "https://www.instagram.com/orion.polaris",
-        "whatsapp", "https://wa.me/212772604428",
-        "location", "Rabat, Morocco",
-        "services", services.findByActiveTrueOrderByNameAsc(),
-        "featuredProjects", projects.findByFeaturedTrueOrderByProjectDateDesc(),
-        "testimonials", testimonials.findByFeaturedTrue());
+    return Map.ofEntries(
+        Map.entry("brand", "ALBATROS"),
+        Map.entry("founder", "Hamza Elbahi"),
+        Map.entry("role", "Photographer - Videographer - Video Editor"),
+        Map.entry("tagline", "Rabat-based cinematic stories for weddings, brands, artists, and unforgettable nights."),
+        Map.entry("email", "hamzaelbahi.orion@gmail.com"),
+        Map.entry("phone", "+212 772 604 428"),
+        Map.entry("instagram", "https://www.instagram.com/orion.polaris"),
+        Map.entry("whatsapp", "https://wa.me/212772604428"),
+        Map.entry("location", "Rabat, Morocco"),
+        Map.entry("services", services.findByActiveTrueOrderByNameAsc()),
+        Map.entry("featuredProjects", projects.findByFeaturedTrueOrderByProjectDateDesc()),
+        Map.entry("testimonials", testimonials.findByFeaturedTrue()));
   }
 
   @GetMapping("/services")

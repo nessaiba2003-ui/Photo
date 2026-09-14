@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16
     environment:
       POSTGRES_DB: lenscraft
       POSTGRES_USER: ${DATABASE_USERNAME:?Set DATABASE_USERNAME}
@@ -24,7 +24,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
       ADMIN_EMAIL: hamzaelbahi.orion@gmail.com
       ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:?Set ADMIN_BOOTSTRAP_PASSWORD as a server-side secret before first startup}
-      CORS_ORIGINS: http://localhost:5173,http://localhost:8081
+      CORS_ORIGINS: ${CORS_ORIGINS}
     ports:
       - "8080:8080"
     depends_on:

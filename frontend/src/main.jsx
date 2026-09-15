@@ -4,7 +4,10 @@ import { Calendar, Check, Clock, Image, Instagram, Lock, Mail, MapPin, MessageCi
 import { AnimatePresence, motion } from 'framer-motion';
 import './styles/app.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const API_URL = import.meta.env.VITE_API_URL
+  || (import.meta.env.PROD
+    ? 'https://albatros-api-production.up.railway.app/api'
+    : 'http://localhost:8080/api');
 const API_ORIGIN = API_URL.replace(/\/api\/?$/, '');
 const INSTAGRAM_URL = 'https://www.instagram.com/orion.polaris';
 const WHATSAPP_URL = 'https://wa.me/212772604428';

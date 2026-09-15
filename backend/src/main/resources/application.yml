@@ -1,5 +1,6 @@
 server:
-  port: ${SERVER_PORT:8080}
+  # Railway assigns PORT dynamically; local Docker continues to use 8080 by default.
+  port: ${PORT:${SERVER_PORT:8080}}
 
 spring:
   datasource:

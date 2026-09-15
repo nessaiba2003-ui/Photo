@@ -215,19 +215,17 @@ h1 {
 
 .brand-name-logo {
   display: block;
-  width: min(620px, 88vw);
-  aspect-ratio: 16 / 10;
-  max-height: none;
-  object-fit: contain;
+  width: clamp(150px, 21vw, 260px);
+  aspect-ratio: 1;
+  object-fit: cover;
   object-position: center;
   margin: 0 0 22px;
-  padding: clamp(18px, 3.4vw, 34px);
+  padding: 0;
+  overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 999px;
-  background:
-    radial-gradient(ellipse at 50% 38%, color-mix(in srgb, var(--bright-blue) 10%, transparent), transparent 62%),
-    color-mix(in srgb, var(--surface-a) 82%, transparent);
-  box-shadow: var(--soft-shadow);
+  border-radius: 50%;
+  background: var(--surface-a);
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--ink) 22%, transparent);
 }
 
 .dark-logo { display: block; }
@@ -843,6 +841,7 @@ cite span { color: var(--gold); }
   .topbar-controls { position: absolute; right: 16px; top: 14px; }
   nav { width: 100%; overflow-x: auto; }
   .hero { min-height: 92vh; padding-top: 132px; }
+  .brand-name-logo { width: 150px; margin-bottom: 18px; }
   .actions .btn { width: 100%; }
   .section { padding-block: 66px; }
   .project-card { min-height: 360px; }

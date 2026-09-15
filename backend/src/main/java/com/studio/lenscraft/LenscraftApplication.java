@@ -1,5 +1,6 @@
 package com.studio.lenscraft;
 
+import java.net.URI;
 import java.util.Map;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -11,13 +12,15 @@ public class LenscraftApplication {
     SpringApplication application = new SpringApplication(LenscraftApplication.class);
     String databaseUrl = System.getenv("DATABASE_URL");
 
-    // Render supplies a standard PostgreSQL URI, while Spring's JDBC driver needs a jdbc: URI.
+    // Hosted PostgreSQL providers supply a URI with credentials, while JDBC receives them separately.
     if (databaseUrl != null && (databaseUrl.startsWith("postgres://") || databaseUrl.startsWith("postgresql://"))) {
-      String jdbcUrl = databaseUrl.startsWith("postgres://")
-          ? "jdbc:postgresql://" + databaseUrl.substring("postgres://".length())
-          : "jdbc:" + databaseUrl;
+      URI uri = URI.create(databaseUrl);
+      String jdbcUrl = "jdbc:postgresql://" + uri.getHost()
+          + (uri.getPort() == -1 ? "" : ":" + uri.getPort())
+          + uri.getPath()
+          + (uri.getQuery() == null ? "" : "?" + uri.getQuery());
       application.addInitializers(context -> context.getEnvironment().getPropertySources().addFirst(
-          new MapPropertySource("renderJdbcUrl", Map.of("spring.datasource.url", jdbcUrl))));
+          new MapPropertySource("hostedJdbcUrl", Map.of("spring.datasource.url", jdbcUrl))));
     }
 
     application.run(args);
